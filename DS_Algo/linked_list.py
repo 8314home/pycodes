@@ -85,6 +85,27 @@ class LinkedList(object):
         else:
             print("Empty list")
 
+    # O(n) complexity
+    def middle_node_ll(self):
+        slow_pointer = self.head
+        fast_pointer = self.head
+
+        while fast_pointer.nextNode and fast_pointer.nextNode.nextNode: # and usd to brk the loop when fastpointer reach end
+            slow_pointer = slow_pointer.nextNode
+            fast_pointer = fast_pointer.nextNode.nextNode
+        return slow_pointer
+
+    def reverse_linked_list(self):
+        prev_node = None
+        current_node = self.head
+
+        while current_node:
+            tmp_node = current_node.nextNode
+            current_node.nextNode = prev_node
+            prev_node = current_node
+            current_node = tmp_node
+        self.head = prev_node
+
 
 if __name__ == "__main__":
     print("Hello world")
@@ -110,11 +131,14 @@ if __name__ == "__main__":
     print(ll.total_size)
     ll.print_all()
 
+    ll.insert_at_end(55)
+    print(ll.total_size)
+    ll.print_all()
+    n1 = ll.middle_node_ll()
+    print("middle node {}".format(n1.data))
 
-
-
-
-
-
-
-
+    print("original linked list")
+    ll.print_all()
+    ll.reverse_linked_list()
+    print("After reversing linked list")
+    ll.print_all()

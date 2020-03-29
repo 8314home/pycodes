@@ -4,7 +4,7 @@ def merge_sort(nums):
         return
 
     middle_index = len(nums)//2
-    left_half = nums[:middle_index]  # take till nums[middle_index -1]
+    left_half = nums[:middle_index]  # takes till nums[middle_index -1]
     right_half = nums[middle_index:]
 
     merge_sort(left_half)
