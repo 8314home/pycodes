@@ -1,0 +1,2038 @@
+Spark-scala practice:
+
+1.
+Details - Duration 40 minutes
+
+    Data set URL 512
+    Choose language of your choice Python or Scala
+    Data is available in HDFS file system under /public/crime/csv
+    You can check properties of files using hadoop fs -ls -h /public/crime/csv
+    Structure of data (ID,Case Number,Date,Block,IUCR,Primary Type,Description,Location Description,Arrest,Domestic,Beat,District,Ward,Community Area,FBI Code,X Coordinate,Y Coordinate,Year,Updated On,Latitude,Longitude,Location)
+    File format - text file
+    Delimiter - “,”
+    Get monthly count of primary crime type, sorted by month in ascending and number of crimes per type in descending order
+    Store the result in HDFS path /user/<YOUR_USER_ID>/solutions/solution01/crimes_by_type_by_month
+    Output File Format: TEXT
+    Output Columns: Month in YYYYMM format, crime count, crime type
+    Output Delimiter: \t (tab delimited)
+    Output Compression: gzip
+
+/*
+spark-shell --master yarn \
+  --conf spark.ui.port=12345 \
+  --num-executors 3 \
+  --executor-cores 2 \
+  --executor-memory 3G
+
+  /*
+add: libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+
+export SPARK_MAJOR_VERSION=2
+spark-submit --class DRCrimeProblem --master yarn --conf spark.ui.port=12345 --num-executors 6 --executor-cores 2 --executor-memory 2G /home/8314home/sample_spark_submit/target/scala-2.11/drcrimeproblem_2.11-1.0.jar prod 
+  */
+
+ITVERSITY my HDFS path:
+hdfs://nn01.itversity.com:8020/user/8314home/
+
+Another sample launch: 
+ssh svc_edw_prod@cerebro-job-submitter3.snc1 "\
+export HOME=/home/$(whoami)
+export SPARK_HOME=/var/groupon/spark-2.0.1
+/var/groupon/spark-2.0.1/bin/spark-submit \
+  --master yarn \
+  --deploy-mode client \
+  --queue edw_core \
+  --driver-memory=10G \
+  --driver-cores=2 \
+  --executor-memory=14G \
+  --conf spark.sql.shuffle.partitions=400 \
+  --conf spark.ui.port=5051 \
+  --files $SPARK_HOME/conf/hive-site.xml \
+  --class com.groupon.edw.productAttribution.orderAttribution.driver.productAttributionDriver /var/groupon/tmp/webOrdersAttrProd/product_attribution-assembly-0.1.jar 2019-03-14 2 30"
+
+
+*/
+
+
+hdfs dfs -ls /public/crime/csv/crime_data.csv
+
+[8314home@gw03 ~]$ hdfs dfs -cat /public/crime/csv/crime_data.csv|head -2
+ID,Case Number,Date,Block,IUCR,Primary Type,Description,Location Description,Arrest,Domestic,Beat,District,Ward,Community Area,FBI Code,X Coordinate,Y Coordinate,Year,Updated On,Latitude,Longitude,Location
+5679862,HN487108,07/24/2007 10:11:00 PM,054XX S ABERDEEN ST,1320,CRIMINAL DAMAGE,TO VEHICLE,STREET,false,false,0934,009,16,61,14,1169912,1868555,2007,04/15/2016 08:55:02 AM,41.794811309,-87.652466989,"(41.794811309, -87.652466989)"
+
+// Solution using data frame/Sql
+val crimeData = sc.textFile("/public/crime/csv")
+val header = crimeData.first
+val crimeDataWithoutHeader = crimeData.filter(criminalRecord => criminalRecord != header)
+
+val crimeDataWithDateAndTypeDF = crimeDataWithoutHeader.
+  map(rec => (rec.split(",")(2), rec.split(",")(5))).
+  toDF("crime_date", "crime_type")
+
+crimeDataWithDateAndTypeDF.registerTempTable("crime_data")
+
+val crimeCountPerMonthPerTypeDF = sqlContext.
+  sql("select cast(concat(substr(crime_date, 7, 4), substr(crime_date, 0, 2)) as int) crime_month, " +
+  "count(1) crime_count_per_month_per_type, " +
+  "crime_type " +
+  "from crime_data " +
+  "group by cast(concat(substr(crime_date, 7, 4), substr(crime_date, 0, 2)) as int), crime_type " +
+  "order by crime_month, crime_count_per_month_per_type desc")
+
+crimeCountPerMonthPerTypeDF.rdd.
+  map(rec => rec.mkString("\t")).
+  coalesce(1).
+  saveAsTextFile("/user/8314home/crimes_by_type_by_month_rdd/",classOf[org.apache.hadoop.io.compress.GzipCodec])
+
+//Solution by RDD:
+
+// Solution using Core API
+val crimeData = sc.textFile("/public/crime/csv")
+val header = crimeData.first
+val crimeDataWithoutHeader = crimeData.filter(criminalRecord => criminalRecord != header)
+
+/*
+// Logic to convert a record into tuple
+val rec = crimeDataWithoutHeader.first
+// Extract date eg: 12/31/2007
+// We need only year and month in YYYYMM format, 12/31/2007 -> 200712
+// Finally create tuple ((crime_month, crime_type), 1)
+val t = {
+  val r = rec.split(",")
+  val d = r(2).split(" ")(0) // 12/31/2007
+  val m = d.split("/")(2) + d.split("/")(0) //200712
+  ((m.toInt, r(5)), 1) //tuple
+}
+*/
+
+val criminalRecordsWithMonthAndType = crimeDataWithoutHeader.
+  map(rec => {
+    val r = rec.split(",")
+    val d = r(2).split(" ")(0) // 12/31/2007
+    val m = d.split("/")(2) + d.split("/")(0) //200712
+    ((m.toInt, r(5)), 1)  
+  })
+val crimeCountPerMonthPerType = criminalRecordsWithMonthAndType.
+  reduceByKey((total, value) => total + value)
+
+//((200707,WEAPONS VIOLATION),count) -> ((200707, count), "200707,count,WEAPONS VIOLATION")
+// 200707,count,WEAPONS VIOLATION
+val crimeCountPerMonthPerTypeSorted = crimeCountPerMonthPerType.
+  map(rec => ((rec._1._1, -rec._2), rec._1._1 + "\t" + rec._2 + "\t" + rec._1._2)).
+  sortByKey().
+  map(rec => rec._2)
+
+crimeCountPerMonthPerTypeSorted.
+  coalesce(1).
+  saveAsTextFile("/user/dgadiraju/solutions/solution01/crimes_by_type_by_month", 
+classOf[org.apache.hadoop.io.compress.GzipCodec])
+
+====================================================================================================
+
+2. Problem:
+Details - Duration 15 to 20 minutes
+Data is available in local file system /data/retail_db
+Source directories: /data/retail_db/orders and /data/retail_db/customers
+Source delimiter: comma (“,”)
+Source Columns - orders - order_id, order_date, order_customer_id, order_status
+Source Columns - customers - customer_id, customer_fname, customer_lname and many more
+Get the customers who have not placed any orders, sorted by customer_lname and then customer_fname
+Target Columns: customer_lname, customer_fname
+Number of files - 1
+Target Directory: /user/<YOUR_USER_ID>/solutions/solutions02/inactive_customers
+Target File Format: TEXT
+Target Delimiter: comma (“, ”)
+Compression: N/A
+
+
+import scala.io.Source
+
+val ordersRaw = Source.fromFile("/data/retail_db/orders/part-00000").getLines.toList
+val orders = sc.parallelize(ordersRaw)
+
+val customersRaw = Source.fromFile("/data/retail_db/customers/part-00000").getLines.toList
+val customers = sc.parallelize(customersRaw)
+
+val ordersMap = orders.
+  map(order => (order.split(",")(2).toInt, 1))
+val customersMap = customers.
+  map(c => (c.split(",")(0).toInt, (c.split(",")(2), c.split(",")(1))))
+val customersLeftOuterJoinOrders = customersMap.leftOuterJoin(ordersMap)
+val inactiveCustomersSorted = customersLeftOuterJoinOrders.
+  filter(t => t._2._2 == None).
+  map(rec => rec._2).
+  sortByKey()
+inactiveCustomersSorted.
+  map(rec => rec._1._1 + ", " + rec._1._2).
+  saveAsTextFile("/user/dgadiraju/solutions/solutions02/inactive_customers")
+
+
+-----Using Data frame & SQL
+
+import scala.io.Source
+
+val ordersRaw = Source.fromFile("/data/retail_db/orders/part-00000").getLines.toList
+val ordersRDD = sc.parallelize(ordersRaw)
+
+val customersRaw = Source.fromFile("/data/retail_db/customers/part-00000").getLines.toList
+val customersRDD = sc.parallelize(customersRaw)
+
+val ordersDF = ordersRDD.
+  map(o => o.split(",")(2).toInt).
+  toDF("order_customer_id")
+val customersDF = customersRDD.
+  map(c => (c.split(",")(0).toInt, c.split(",")(1), c.split(",")(2))).
+  toDF("customer_id", "customer_fname", "customer_lname")
+
+ordersDF.registerTempTable("orders_dg")
+customersDF.registerTempTable("customers_dg")
+
+sqlContext.setConf("spark.sql.shuffle.partitions", "1")
+
+sqlContext.
+  sql("select customer_lname, customer_fname " + 
+      "from customers_dg left outer join orders_dg " +
+      "on customer_id = order_customer_id " +
+      "where order_customer_id is null " +
+      "order by customer_lname, customer_fname").
+  rdd.
+  map(rec => rec.mkString(", ")).
+  saveAsTextFile("/user/dgadiraju/solutions/solutions02/inactive_customers")
+
+====================================================================================================
+
+3. 
+Details - Duration 15 to 20 minutes
+Data is available in HDFS file system under /public/crime/csv
+Structure of data (ID,Case Number,Date,Block,IUCR,Primary Type,Description,Location Description,Arrest,Domestic,Beat,District,Ward,Community Area,FBI Code,X Coordinate,Y Coordinate,Year,Updated On,Latitude,Longitude,Location)
+File format - text file
+Delimiter - “,” (use regex while splitting split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1), as there are some fields with comma and enclosed using double quotes.
+Get top 3 crime types based on number of incidents in RESIDENCE area using “Location Description”
+Store the result in HDFS path /user/<YOUR_USER_ID>/solutions/solution03/RESIDENCE_AREA_CRIMINAL_TYPE_DATA
+Output Fields: Crime Type, Number of Incidents
+Output File Format: JSON
+Output Delimiter: N/A
+Output Compression: No
+
+// Solution using Core API
+val crimeData = sc.textFile("/public/crime/csv")
+val header = crimeData.first
+val crimeDataWithoutHeader = crimeData.filter(criminalRecord => criminalRecord != header)
+
+val crimeCountForResidence = sc.parallelize(crimeDataWithoutHeader.
+  filter(rec => rec.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1)(7) == "RESIDENCE").
+  map(rec => (rec.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1)(5), 1)).
+  reduceByKey((total, value) => total + value).
+  map(rec => (rec._2, rec._1)).
+  sortByKey(false).
+  take(3))
+
+crimeCountForResidence.
+  map(rec => (rec._2, rec._1)).
+  toDF("crime_type", "crime_count").
+  write.json("user/dgadiraju/solutions/solution03/RESIDENCE_AREA_CRIMINAL_TYPE_DATA")
+
+// Solution using DF 
+
+val crimeData = sc.textFile("/public/crime/csv")
+val header = crimeData.first
+val crimeDataWithoutHeader = crimeData.filter(criminalRecord => criminalRecord != header)
+
+val crimeDataWithoutHeaderDF = crimeDataWithoutHeader.
+  map(rec => {
+    val r = rec.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1)
+    (r(7), r(5))
+  }).toDF("location_description", "crime_type")
+
+crimeDataWithoutHeaderDF.registerTempTable("crime_data")
+
+sqlContext.setConf("spark.sql.shuffle.partitions", "4")
+sqlContext.sql("select * from (" +
+                 "select crime_type, count(1) crime_count " +
+                 "from crime_data " +
+                 "where location_description = 'RESIDENCE' " +
+                 "group by crime_type " +
+                 "order by crime_count desc) q " +
+               "limit 3").
+  coalesce(1).
+  save("/user/dgadiraju/solutions/solution03/RESIDENCE_AREA_CRIMINAL_TYPE_DATA", "json")
+
+====================================================================================================
+
+4.Details - Duration 10 minutes
+Data is available in local file system under /data/nyse (ls -ltr /data/nyse)
+Fields (stockticker:string, transactiondate:string, openprice:float, highprice:float, lowprice:float, closeprice:float, volume:bigint)
+Convert file format to parquet
+Save it /user/<YOUR_USER_ID>/nyse_parquet
+
+
+
+// hadoop fs -copyFromLocal /data/nyse /user/dgadiraju/nyse
+
+/*
+spark-shell --master yarn \
+  --conf spark.ui.port=12345 \
+  --num-executors 4
+*/
+
+val nyse = sc.textFile("/user/dgadiraju/nyse").
+  coalesce(4).
+  map(stock => {
+    val s = stock.split(",")
+    (s(0), s(1), s(2).toFloat, s(3).toFloat, s(4).toFloat, s(5).toFloat, s(6).toInt)
+  }).
+  toDF("stockticker", "transactiondate", "openprice", "highprice", "lowprice", "closeprice", "volume")
+  
+sqlContext.setConf("spark.sql.shuffle.partitions", "4")
+nyse.save("/user/dgadiraju/nyse_parquet", "parquet")
+//nyse.write.parquet("spark-scala-")
+
+
+====================================================================================================
+
+5. 
+Details - Duration 20 minutes
+Data is available in HDFS /public/randomtextwriter
+Get word count for the input data using space as delimiter (for each word, we need to get how many types it is repeated in the entire input data set)
+Number of executors should be 10
+Executor memory should be 3 GB
+Executor cores should be 20 in total (2 per executor)
+Number of output files should be 8
+Avro dependency details: groupId -> com.databricks, artifactId -> spark-avro_2.10, version -> 2.0.1
+Target Directory: /user/<YOUR_USER_ID>/solutions/solution05/wordcount
+Target File Format: Avro
+Target fields: word, count
+Compression: N/A or default
+
+
+/*
+spark-shell --master yarn \
+  --conf spark.ui.port=12456 \
+  --num-executors 10 \
+  --executor-memory 3G \
+  --executor-cores 2 \
+  --packages com.databricks:spark-avro_2.10:2.0.1
+*/
+
+val lines = sc.textFile("/public/randomtextwriter")
+val words = lines.flatMap(line => line.split(" "))
+val tuples = words.map(word => (word, 1))
+val wordCount = tuples.reduceByKey((total, value) => total + value, 8)
+val wordCountDF = wordCount.toDF("word", "count")
+
+import com.databricks.spark.avro._
+wordCountDF.write.avro("/user/dgadiraju/solutions/solution05/wordcount")
+
+====================================================================================================
+
+
+
+Udemy spark scala sourse problems
+
+
+1. UK Maker Space problem:
+
+package com.sparkTutorial.sparkSql
+
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.{current_timestamp,to_date}
+
+
+object TestUkMakerSpace_2 {
+
+  def main(args: Array[String]) :Unit={
+
+    Logger.getLogger("org").setLevel(Level.ERROR)
+
+    val session = SparkSession.builder().appName("TestUkMakerSpace_2").master("local[2]").getOrCreate()
+
+    println("Spark Session created")
+
+    val makerspacecsvdata = session.read
+                                   .format("csv")
+                                   .option("header",true)
+                                   .option("inferschema",true)
+                                   .option("mode","FAILFAST")
+                                   .option("path","in/uk-makerspaces-identifiable-data.csv")
+                                   .load()
+// val makerSpace = session.read.option("header","true").csv("in/uk-makerspaces-identifiable-data.csv")
+
+    println("maker space data rows: ")
+    val makerspacecsvdata_sel_col = makerspacecsvdata.select("Name of makerspace","Timestamp" ,"Email address"
+                              ,"Date your space opened (or plans to open)","Date your space closed (if it is no longer running)","Total visits in November 2014","Unique users in November 2014","Do you produce accounts?")
+
+
+    val valid_makerspacecsvdata = makerspacecsvdata_sel_col.where(makerspacecsvdata_sel_col.col("Date your space opened (or plans to open)").isNotNull)
+                                                           .where(makerspacecsvdata_sel_col.col("Name of makerspace").isNotNull)
+
+    //valid_makerspacecsvdata.show(5)
+    val valid_makerspacecsvdata_count = valid_makerspacecsvdata.count()
+
+    println(s"valid_makerspacecsvdata_count : ${valid_makerspacecsvdata_count}")
+
+    valid_makerspacecsvdata.withColumn("current_date",current_timestamp()).show(5)
+
+    val chk_dateformat = "dd-MMM-yy"
+    val chk_dateformat_2 = "dd/MM/yy"
+
+    val valid_makerspacecsvdata_dates = valid_makerspacecsvdata
+      .withColumn("chk_Timestamp",to_date(valid_makerspacecsvdata.col("Timestamp"),chk_dateformat))
+      .withColumn("Date_space_opened",to_date(valid_makerspacecsvdata.col("Date your space opened (or plans to open)"),chk_dateformat_2))
+
+    val valid_makerspacecsvdata_dates_valid = valid_makerspacecsvdata_dates.na
+            .fill("0",Seq("Total visits in November 2014","Unique users in November 2014"))
+        .drop("Date your space opened (or plans to open)")
+        .drop("Timestamp")
+        .withColumnRenamed("Date your space closed (if it is no longer running)","date_space_closed")
+        .withColumnRenamed("Total visits in November 2014","total_visit_in_nov")
+        .withColumnRenamed("Do you produce accounts?","produce_accounts_flag")
+
+
+    println("valid_makerspacecsvdata_dates values: ")
+    valid_makerspacecsvdata_dates_valid.show(5)
+
+    println("Group valid_makerspacecsvdata_dates_valid data")
+    valid_makerspacecsvdata_dates_valid.groupBy("chk_Timestamp").count().show()
+
+    session.stop()
+    println("Spark session stopped")
+
+     }
+
+
+}
+
+
+2. DATASET
+
+package com.sparkTutorial.sparkSql
+
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.SparkSession
+
+object TypedDataset {
+
+  val AGE_MIDPOINT = "age_midpoint"
+  val SALARY_MIDPOINT = "salary_midpoint"
+  val SALARY_MIDPOINT_BUCKET = "salaryMidpointBucket"
+
+  def main(args: Array[String]) {
+    Logger.getLogger("org").setLevel(Level.ERROR)
+    val session = SparkSession.builder().appName("StackOverFlowSurvey").master("local[*]").getOrCreate()
+    val dataFrameReader = session.read
+
+    val responses = dataFrameReader
+      .option("header", "true")
+      .option("inferSchema", value = true)
+      .csv("in/2016-stack-overflow-survey-responses.csv")
+
+    val responseWithSelectedColumns = responses.select("country", "age_midpoint", "occupation", "salary_midpoint")
+
+    import session.implicits._
+    val typedDataset = responseWithSelectedColumns.as[Response]
+
+    System.out.println("=== Print out schema ===")
+    typedDataset.printSchema()
+
+    System.out.println("=== Print 20 records of responses table ===")
+    typedDataset.show(20)
+
+    System.out.println("=== Print the responses from Afghanistan ===")
+    typedDataset.filter(response => response.country == "Afghanistan").show()
+
+    System.out.println("=== Print the count of occupations ===")
+    typedDataset.groupBy(typedDataset.col("occupation")).count().show()
+
+    System.out.println("=== Print responses with average mid age less than 20 ===")
+    typedDataset.filter(response => response.age_midpoint.isDefined && response.age_midpoint.get < 20.0).show()
+
+    System.out.println("=== Print the result by salary middle point in descending order ===")
+    typedDataset.orderBy(typedDataset.col(SALARY_MIDPOINT).desc).show()
+
+    System.out.println("=== Group by country and aggregate by average salary middle point ===")
+    typedDataset.filter(response => response.salary_midpoint.isDefined).groupBy("country").avg(SALARY_MIDPOINT).show()
+
+    System.out.println("=== Group by salary bucket ===")
+    typedDataset.map(response => response.salary_midpoint.map(point => Math.round(point / 20000) * 20000).orElse(None))
+      .withColumnRenamed("value", SALARY_MIDPOINT_BUCKET)
+      .groupBy(SALARY_MIDPOINT_BUCKET)
+      .count()
+      .orderBy(SALARY_MIDPOINT_BUCKET).show()
+  }
+}
+
+
+3. Stack Overflow Survey
+
+package com.sparkTutorial.sparkSql
+
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.SparkSession
+
+object MyTestStackOverFlowSurvey {
+
+  val AGE_MIDPOINT = "age_midpoint"
+  val SALARY_MIDPOINT = "salary_midpoint"
+  val SALARY_MIDPOINT_BUCKET = "salary_midpoint_bucket"
+
+  def main(args: Array[String]){
+
+    Logger.getLogger("org").setLevel(Level.ERROR)
+    val session = SparkSession.builder().appName("MyTestStackOverFlowSurvey").master("local[2]").getOrCreate()
+
+    val dataFrameReader = session.read
+
+    val responses = dataFrameReader
+      .option("header", "true")
+      .option("inferSchema", value = true)
+      .csv("in/2016-stack-overflow-survey-responses.csv")
+
+    System.out.println("==== Printing Schema =====")
+    responses.printSchema()
+    val responsesSelect = responses.select("country","occupation", "women_on_team",AGE_MIDPOINT,SALARY_MIDPOINT)
+    val responsesSelectWomen = responsesSelect.filter(responsesSelect.col("women_on_team").isNotNull).filter(responsesSelect.col("women_on_team") > 0)
+    val responsesSelectWomenValidOccupation = responsesSelectWomen.filter(responsesSelectWomen.col("occupation").isNotNull)
+
+    val responsesSelectWomenValidOccupationGroup = responsesSelectWomenValidOccupation.groupBy("occupation")
+
+    val responsesSelectWomenValidOccupationGroupCount = responsesSelectWomenValidOccupationGroup.count()
+
+    val responsesSelectWomenValidOccupationGroupCountOrder = responsesSelectWomenValidOccupationGroupCount
+                                                             .orderBy(responsesSelectWomenValidOccupationGroupCount.col("count").desc)
+
+    //responsesSelectWomenValidOccupationGroupCountOrder.show(5)
+
+    val responseWithSalaryBucket = responsesSelectWomenValidOccupation.withColumn(SALARY_MIDPOINT_BUCKET,
+                     responsesSelectWomenValidOccupation.col(SALARY_MIDPOINT).divide(20000)
+                                .cast("integer").multiply(20000))
+
+    responseWithSalaryBucket.show(5)
+
+    session.stop()
+  }
+
+}
+
+4. HousePriceProblem {
+
+        /* Create a Spark program to read the house data from in/RealEstate.csv,
+           group by location, aggregate the average price per SQ Ft and sort by average price per SQ Ft.
+
+        The houses dataset contains a collection of recent real estate listings in San Luis Obispo county and
+        around it. 
+
+        The dataset contains the following fields:
+        1. MLS: Multiple listing service number for the house (unique ID).
+        2. Location: city/town where the house is located. Most locations are in San Luis Obispo county and
+        northern Santa Barbara county (Santa Maria­Orcutt, Lompoc, Guadelupe, Los Alamos), but there
+        some out of area locations as well.
+        3. Price: the most recent listing price of the house (in dollars).
+        4. Bedrooms: number of bedrooms.
+        5. Bathrooms: number of bathrooms.
+        6. Size: size of the house in square feet.
+        7. Price/SQ.ft: price of the house per square foot.
+        8. Status: type of sale. Thee types are represented in the dataset: Short Sale, Foreclosure and Regular.
+
+        Each field is comma separated.
+
+        Sample output:
+
+        +----------------+-----------------+
+        |        Location| avg(Price SQ Ft)|
+        +----------------+-----------------+
+        |          Oceano|             95.0|
+        |         Bradley|            206.0|
+        | San Luis Obispo|            359.0|
+        |      Santa Ynez|            491.4|
+        |         Cayucos|            887.0|
+        |................|.................|
+        |................|.................|
+        |................|.................|
+         */
+}
+
+package com.sparkTutorial.sparkSql
+
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.SparkSession
+
+object HousePriceSolution {
+
+  val PRICE_SQ_FT = "Price SQ Ft"
+
+  def main(args: Array[String]) {
+
+    Logger.getLogger("org").setLevel(Level.ERROR)
+    val session = SparkSession.builder().appName("HousePriceSolution").master("local[1]").getOrCreate()
+
+    val realEstate = session.read
+      .option("header", "true")
+      .option("inferSchema", value = true)
+      .csv("in/RealEstate.csv")
+
+    realEstate.groupBy("Location")
+      .avg(PRICE_SQ_FT)
+      .orderBy("avg(Price SQ Ft)")
+      .show()
+  }
+}
+
+5.     /* Create a Spark program to read the airport data from in/airports.text,
+       output the the list of the names of the airports located in each country.
+
+       Each row of the input file contains the following columns:
+       Airport ID, Name of airport, Main city served by airport, Country where airport is located, IATA/FAA code,
+       ICAO Code, Latitude, Longitude, Altitude, Timezone, DST, Timezone in Olson format
+
+       Sample output:
+
+       "Canada", List("Bagotville", "Montreal", "Coronation", ...)
+       "Norway" : List("Vigra", "Andenes", "Alta", "Bomoen", "Bronnoy",..)
+       "Papua New Guinea",  List("Goroka", "Madang", ...)
+       ...
+     */
+  }
+}
+
+package com.sparkTutorial.pairRdd.groupbykey
+
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.{SparkConf, SparkContext}
+
+object GroupByKeyVsReduceByKey {
+
+  def main(args: Array[String]) {
+    Logger.getLogger("org").setLevel(Level.ERROR)
+    val conf = new SparkConf().setAppName("GroupByKeyVsReduceByKey").setMaster("local[*]")
+    val sc = new SparkContext(conf)
+
+    val words = List("one", "two", "two", "three", "three", "three")
+    val wordsPairRdd = sc.parallelize(words).map(word => (word, 1))
+
+    val wordCountsWithReduceByKey = wordsPairRdd.reduceByKey((x, y) => x + y).collect()
+    println("wordCountsWithReduceByKey: " + wordCountsWithReduceByKey.toList)
+
+    val wordCountsWithGroupByKey = wordsPairRdd.groupByKey().mapValues(intIterable => intIterable.size).collect()
+    println("wordCountsWithGroupByKey: " + wordCountsWithGroupByKey.toList)
+  }
+}
+
+
+5.  COMBINE BY KEY 
+
+package com.sparkTutorial.pairRdd.aggregation.combinebykey
+
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.{SparkConf, SparkContext}
+
+object AverageHousePriceSolution {
+
+  def main(args: Array[String]) {
+
+    Logger.getLogger("org").setLevel(Level.ERROR)
+    val conf = new SparkConf().setAppName("wordCounts").setMaster("local[3]")
+    val sc = new SparkContext(conf)
+
+    val lines = sc.textFile("in/RealEstate.csv")
+    val cleanedLines = lines.filter(line => !line.contains("Bedrooms"))
+
+    val housePricePairRdd = cleanedLines.map(line => (line.split(",")(3), line.split(",")(2).toDouble))
+
+    val createCombiner = (x: Double) => (1, x)
+    val mergeValue = (avgCount: AvgCount, x: Double) => (avgCount._1 + 1, avgCount._2 + x)
+    val mergeCombiners = (avgCountA: AvgCount, avgCountB: AvgCount) => (avgCountA._1 + avgCountB._1, avgCountA._2 + avgCountB._2)
+
+    val housePriceTotal = housePricePairRdd.combineByKey(createCombiner, mergeValue, mergeCombiners)
+
+    val housePriceAvg = housePriceTotal.mapValues(avgCount => avgCount._2 / avgCount._1)
+    for ((bedrooms, avgPrice) <- housePriceAvg.collect()) println(bedrooms + " : " + avgPrice)
+  }
+
+
+6. Accumulator :
+
+package com.sparkTutorial.advanced.accumulator
+
+import com.sparkTutorial.commons.Utils
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.{SparkConf, SparkContext}
+
+object StackOverFlowSurvey {
+
+  def main(args: Array[String]) {
+    Logger.getLogger("org").setLevel(Level.ERROR)
+    val conf = new SparkConf().setAppName("StackOverFlowSurvey").setMaster("local[1]")
+    val sparkContext = new SparkContext(conf)
+
+    val total = sparkContext.longAccumulator
+    val missingSalaryMidPoint = sparkContext.longAccumulator
+
+    val responseRDD = sparkContext.textFile("in/2016-stack-overflow-survey-responses.csv")
+
+    val responseFromCanada = responseRDD.filter(response => {
+      val splits = response.split(Utils.COMMA_DELIMITER, -1)
+      total.add(1)
+
+      if (splits(14).isEmpty) {
+        missingSalaryMidPoint.add(1)
+      }
+
+      splits(2) == "Canada"
+    })
+
+    println("Count of responses from Canada: " + responseFromCanada.count())
+    println("Total count of responses: " + total.value)
+    println("Count of responses missing salary middle point: " + missingSalaryMidPoint.value)
+  }
+}
+
+7. Brodcast variable:
+
+package com.sparkTutorial.advanced.broadcast
+
+import com.sparkTutorial.commons.Utils
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.{SparkConf, SparkContext}
+
+import scala.io.Source
+
+object UkMakerSpaces {
+
+  def main(args: Array[String]) {
+    Logger.getLogger("org").setLevel(Level.ERROR)
+    val conf = new SparkConf().setAppName("UkMakerSpaces").setMaster("local[1]")
+    val sparkContext = new SparkContext(conf)
+
+    val postCodeMap = sparkContext.broadcast(loadPostCodeMap())
+
+    val makerSpaceRdd = sparkContext.textFile("in/uk-makerspaces-identifiable-data.csv")
+
+    val regions = makerSpaceRdd
+      .filter(line => line.split(Utils.COMMA_DELIMITER, -1)(0) != "Timestamp")
+      .filter(line => getPostPrefix(line).isDefined)
+      .map(line => postCodeMap.value.getOrElse(getPostPrefix(line).get, "Unknown"))
+
+    for ((region, count) <- regions.countByValue()) println(region + " : " + count)
+  }
+
+  def getPostPrefix(line: String): Option[String] = {
+    val splits = line.split(Utils.COMMA_DELIMITER, -1)
+    val postcode = splits(4)
+    if (postcode.isEmpty) None else Some(postcode.split(" ")(0))
+  }
+
+  def loadPostCodeMap(): Map[String, String] = {
+    Source.fromFile("in/uk-postcode.csv").getLines.map(line => {
+      val splits = line.split(Utils.COMMA_DELIMITER, -1)
+      splits(0) -> splits(7)
+    }).toMap
+  }
+}
+  type AvgCount = (Int, Double)
+}
+
+
+
+8. UK MAKERSPACE JOIN
+
+
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.{SparkSession, functions}
+
+object UkMakerSpaces {
+
+  def main(args: Array[String]) {
+
+    Logger.getLogger("org").setLevel(Level.ERROR)
+
+    val session = SparkSession.builder().appName("UkMakerSpaces").master("local[*]").getOrCreate()
+
+    val makerSpace = session.read.option("header", "true").csv("in/uk-makerspaces-identifiable-data.csv")
+
+    val postCode = session.read.option("header", "true").csv("in/uk-postcode.csv")
+       .withColumn("PostCode", functions.concat_ws("", functions.col("PostCode"), functions.lit(" ")))
+
+    System.out.println("=== Print 20 records of makerspace table ===")
+    makerSpace.select("Name of makerspace", "Postcode").show()
+
+    System.out.println("=== Print 20 records of postcode table ===")
+    postCode.show()
+
+    val joined = makerSpace.join(postCode, makerSpace.col("Postcode").startsWith(postCode.col("Postcode")), "left_outer")
+
+    System.out.println("=== Group by Region ===")
+    joined.groupBy("Region").count().show(200)
+  }
+}
+
+---------------------
+
+Spark - Fast in memory data processing engine - distributes computational task to worker machines.- creates DAG - lazy evaluation
+
+git clone url - to download git repository in local machine.
+RDD basics-transformation -apply some fn to give new RDD & action - compute result give other data type
+spark context obj - a connection to spark computing cluster
+parallelize requires entire data set to be fit in machine's memory.
+
+RDD -distributed - broken into multiple pieces called partitions & distributed accross cluster
+
+local[2]- means will run two worker thread in 2 cores of my local box
+
+flatmap - producing multiple o/p elements from 1 element(eg 1 row). 1 to many relationship.
+
+a file containing data like below 
+
+1 2 3 4 5
+6 7 8 9 10
+11 12 13 14 15
+
+now we want to get a data that will tell odd/even based on number
+
+val rdd=sc.textFile(filename)
+rdd.flatmap(x => if(x%2==1) "odd" else "even" )
+
+import org.apache.spark.{SparkConf,SparkContext}
+import org.apache.log4j.{Logger,Level}
+
+object airportData{
+
+def main(args: Array[String]){
+
+Logger.getLogger("org").setLevel(Level.ERROR)
+
+val conf=new SparkConf().setAppName("Wordcount").setMaster("local[3]")
+val sc=new SparkContext(conf)
+
+val lines =sc.textFile("in/airport.txt")
+val words=lines.flatmap(line => line.split(" "))
+
+val wordcount = words.countByValue()
+for((word,count)<-wordcount){println(word+": "+count)}
+}
+
+}
+
+set opration: sample & distinct
+
+sample - gives random sample from RDD retruns RDD - takes withRplacement :Boolean,fraction,seed value
+disticnt - gives distict set of rows in target RDD from input RDD, expensive as will cause shuffle of data accross all partitions.
+union[ is UNION ALL will contain duplicate],intersection,subtract - RDD must be of same type.
+intersection removes duplicate data before sending to output - including duplicates within single RDD.- expensive - shuffle all partiotions
+
+import org.apache.spark.{SparkConf,SparkContext}
+import org.apache.log4j.{Logger,Level}
+object UnionLogSolution{
+	
+def isHeader(line:String):Boolean= line.startswith("hosts") && line.contains("bytes")
+
+/*
+line.startswith("")
+line.contains("")
+line.endswith("")
+
+*/
+
+
+def main(args: Array[String]){
+
+Logger.getLogger("org").setLevel(Level.ERROR)
+
+val conf=new SparkConf().setAppName("Nasa union Log").setMaster("local[*]")
+val sc=new SparkContext(conf)
+
+val julylogs=sc.textFile("in/july.log")
+val auglogs=sc.textFile("in/aug.log")
+
+val combinedlog = julylogs.union(augustlogs)
+
+val combinedlogwithoutheader = combinedlog.filter(line => !(isHeader(line))
+
+val sample = combinedlogwithoutheader.sample(withReplacement=true,fraction=0.01)
+
+sample.saveAsTextFile("out/finalfile.log")
+
+}
+
+}
+
+practice - same hosts problem:
+
+Action - collect,count - gives no of records in RDD ,countByValue,take,saveAsTextFile,reduce - (fn:(T,T)"=>"T) function.
+
+transaformation always returns an RDD but action returns some other data type.
+
+sum of numbers: read the data from file.
+val numbers=lines.flatmap(line => line.split("\\s+"))  -- if lines contain multiple spaces \\s+ reg exp will match them
+
+caching - want to perform multiple actions on same RDD multiple times - will need all dependencies recomputed - expensive - use persists(StorageLevel.MEMEORY_ONLY) - 1st time when accessed ,result is stored in memory accross all nodes.
+RDD.cache() === RDD.persists(StorageLevel.MEMEORY_ONLY)
+
+What will happen if you attempt to cache too much data in memory?
+SPARK JOB WILL NOT BREAK.old partitions files will be removed from memory & recomputed again when needed for option MEMORY_ONLY.
+For MEMORY_AND_DISK - old partitions will be saved to disk.-longer computation time - use unpersist() .
+
+Spark architecture:
+master-slave arch - application-> 1:n  Jobs-> 1:n Stage(narrow/wide transformation) --> 1:n tasks -> tasks are java process in worker node.
+
+Pair RDD - key value pair RDD - key mapped to one or multiple values
+scala collection -> pair RDD - sc.parallelize(list)
+normal RDD -> Pair RDD - RDD.map(s => (s.split(0),s.split(1)))
+
+mapValues - operation just on value part of key value pair.
+
+reduceByKey "=>"RDD -spark runs several parallel reduce operation ,one for each key from key-value data set,combines values for same key.
+it is a transaformation which returns RDD.(key,reduced value for the key)
+
+reduceByKey - KV Pairs within same partition with same key are combined using lambda fn passed.Next shuffle. Next values with same key
+ accross partions are reduced.
+combine -> shuffle -> reduce
+
+Practice -> avg house price problem:
+
+import org.apache.spark.{SparkContext,SparkConf}
+import org.apache.log4j.{Logger,Level}
+
+case class Avghouse(count: Int,price :Double);
+
+object AvgHousePriceProblem {
+
+def main(args: Array[String]){
+
+Logger.getLogger("org").setLevel(Level.ERROR)
+
+val conf= new SparkConf().setAppName("avgHousePriceProblem").setMaster("yarn")
+val sc= new SparkContext(conf)
+
+val data =sc.textFile("/user/8314home/RealEstate.csv")
+val cleandata = data.filter(line => !line.contains("Bedrooms"))
+
+val lines = cleandata.map(line => (line.split(",")(3).toInt,Avghouse(1,line.split(",")(2).toDouble)))
+
+val red_data = lines.reduceByKey((x,y)=>Avghouse(x.count+y.count,x.price+y.price))
+
+val avghouseprice = red_data.mapValues(rec => (rec.price/rec.count))
+
+// sorting operation:
+
+val sorted_by_no_of_bedroom_avghouseprice = avghouseprice.sortByKey(ascending=false,numPartitions=1)
+
+sorted_by_no_of_bedroom_avghouseprice.saveAsTextFile("out/sorted_by_no_of_bedroom_avghouseprice/")
+
+sc.stop()
+
+}
+
+}
+
+
+groupoByKey - retruns K,Iterable(V)
+
+val airportByCountry = countryAndAirportNamePair.groupByKey() --> ((country1,(airport1,airport2,...)),(country2,(airport1,airport2,...)),..)
+for((country,airport)<-airportByCountry.collectAsMap) { println(countryname + ": "+airport.toList)}
+
+groupByKey + [reduce,map,mapValues] is eq to reduceByKey
+
+practice groupby key - need to see the out of Iterable
+wordcount using groupby
+
+sortByKey vs sortBy- 
+______________________
+
+avghouseprice.sortByKey(ascending=false,numPartitions=1) using existing key 
+val sortedWordCounts = wordCounts.sortBy(wordCount => wordCount._2, ascending = false) generating key dynamically from tuple.
+
+Data partitioning:
+val partitionedRDD=RDD.partitionBy(new HashPartitioner(4))
+partitionedRDD.persists(DISK_ONLY)
+partitionedRDD.groupByKey().collect()
+
+
+operations benefit from parttioning:
+Join,groupoByKey,reduceByKey,CombineByKey
+
+map operation makes new "RDD" to forget old partioning.use mapValues over map
+
+Join : 
+val join = ages.join(addresses)
+val leftOuterJoin = ages.leftOuterJoin(addresses)
+val rightOuterJoin = ages.rightOuterJoin(addresses)
+
+join result == each record = a tuple = key,tuple of (matched values from RDD1,matchd from RDD 2)  - NULL is represented by None scalaOption.
+
+Join where many duplicate keys: can result large result set. use distinct() or combineByKey() to reduce keyspace.
+Join needs data from both RDDS to in same partions .
+Shuffled Hash join - shuffles 2nd RDD based on key to be joined with . But can be expensive.
+use partitionBy on both RDD before to avoid shuffle.
+
+Sample distcp command:
+
+src=webhdfs://gdoop-namenode-vip.snc1:50070/user/grp_gdoop_edw_etl_prod/prod_groupondw.gbl_search_agg/day_rw=2019-07-06
+
+ssh svc_edw_prod@cerebro-job-submitter1.snc1 "hadoop distcp -D mapreduce.job.queuename=edw_core -m $mappers -i -pb $src /user/grp_edw_etl_prod/prod_groupondw.gbl_search_agg_stg/"
+echo "hadoop distcp -D mapreduce.job.queuename=edw_core -m 150 -i -pb webhdfs://gdoop-namenode-vip.snc1:50070/user/grp_gdoop_edw_etl_prod/prod_groupondw.gbl_search_agg/day_rw=2019-07-06 /user/grp_edw_etl_prod/prod_groupondw.gbl_search_agg_stg/"
+
+sftp -oIdentityFile=/home/etl_adhoc/.ssh/envista_id_rsa groupongoods@ftp.envistacorp.com
+
+hdfs dfs -rm -R -skipTrash hdfs://nn01.itversity.com:8020/user/8314home/out/sorted_by_no_of_bedroom_avghouseprice
+
+Accumulators:
+----------------------
+
+Accumulators are variables that are used for aggregating information across the executors. For example, we can
+calculate how many records are corrupted or count events that occur during job execution for debugging purposes.
+
+Questions we want to answer using a SINGLE pass over data, we can defin 3 accumulators
+• How many records do we have in this survey result? -> val total = sc.longAccumulator
+• How many records are missing the salary middle point? -> val missingSalaryMidpoint = sc.longAccumulator
+• How many records are from Canada? -> val no_of_Canada_records = sc.longAccumulator
+
+ val processedBytes = sparkContext.longAccumulator
+ processedBytes.add(response.getBytes().length)
+
+ missingSalaryMidPoint.add(1)
+ to access value:
+ missingSalaryMidPoint.value
+ processedBytes.value
+
+
+ Brodcast variable:
+ ______________________
+
+ Broadcast variables allow the programmer to keep a copy of a large input dataset as readonly variable,cached on each worker nodes
+  rather than shipping a copy of it with tasks.They can be used in one or more Spark operations.
+
+
+Step-1 create Scala HashMap object
+Step-2 brodcast it 
+Step-3 access using brodcast_variable_name.value
+
+  def loadPostCodeMap(): Map[String, String] = {
+    Source.fromFile("in/uk-postcode.csv").getLines.map(line => {
+      val splits = line.split(Utils.COMMA_DELIMITER, -1)
+      splits(0) -> splits(7)
+    }).toMap 
+
+    Above map is from postcode_prefix ---> full_postcode
+
+  def getPostPrefix(line: String): Option[String] = {
+    val splits = line.split(Utils.COMMA_DELIMITER, -1)
+    val postcode = splits(4)
+    if (postcode.isEmpty) None else Some(postcode.split(" ")(0)) -->" The postcode in the maker space RDD is the full postcode, W1T 3AC"taking 1st half
+  }
+
+val postCodeMap = sparkContext.broadcast(loadPostCodeMap())
+
+  val regions = makerSpaceRdd
+      .filter(line => line.split(Utils.COMMA_DELIMITER, -1)(0) != "Timestamp")
+      .filter(line => getPostPrefix(line).isDefined)
+      .map(line => postCodeMap.value.getOrElse(getPostPrefix(line).get, "Unknown"))
+
+getPostPrefix(line).get ---> will return postcode prefix part
+
+• Create a Broadcast variable T by calling SparkContext.broadcast() on an object of type T.
+– The Broadcast variable can be any type as long as it’s serializable because
+the broadcast needs to passed from the driver program to all the worker in the Spark cluster across the wire.
+
+
+SPARk SQL:
+
+"DataFrame vs DataSet":
+DF is a table like data abstraction (having schema )for working "with" structured and semi structured data.
+
+Dataset is a strongly typed collection of domain specific objects,represents a set of structred data not necessarily a Row but it could be
+of a particular type.Java and Spark will know the type of the data in a dataset at compile time.
+
+provides:
+"OOP" style programming
+compile time safety
+benefit of schema to work with structed data.
+
+
+DATASET has ,2 disticnt set of APIs
+1. strongly typed API
+2. untyped API
+
+Consider DataFrame as untyped view of a Dataset, which is a Dataset of Row where a Row is a generic untyped JVM object.
+• Dataset, by contrast, is a collection of strongly-typed JVM objects.
+
+Practice: "stackoverflow survey result by hand:"
+
+______________________
+Catalyst Optimizer:
+______________________
+
+• Spark SQL uses an optimizer called Catalyst to optimize all the queries written both in Spark SQL and DataFrame DSL.
+• This optimizer makes queries run much faster than their RDD counterparts.
+• The Catalyst is a modular library which is built as a rule-based system.Each rule in the framework focuses on the specific optimization. 
+For example, rule like ConstantFolding focuses on removing constant expression from the query.
+
+
+SPARK SQL Join:
+
+val postCode = session.read.option("header", "true").csv("in/uk-postcode.csv").withColumn("PostCode", functions.concat_ws("", functions.col("PostCode"), functions.lit(" ")))
+val joined = makerSpace.join(postCode, makerSpace.col("Postcode").startsWith(postCode.col("Postcode")), "left_outer")
+    joined.groupBy("Region").count().show(200)   
+
+WITH DATASET:
+______________________
+
+ DF = DATASET<"ROW">
+
+Row object has getter functions for fields using index supplied, but he return type of that data is scala Any format.We are responsible for
+casting to correct type,which we can make mistake.The primitive types have methods which return data in correct type.Using strongly typed DataSet
+we can take advantage.
+
+Instead of loading the data as a dataset of Row object , we load it as a dataset of "Repsonse object" with column data types mentioned.
+so we use case class with data types mentioned:
+case class Response(country: String, age_midpoint: Option[Double], occupation: String, salary_midpoint: Option[Double])
+
+import session.implicits._ ===> They help in schema conversion
+val typedDataset = responseWithSelectedColumns.as[Response]    
+
+typedDataset.filter(response => response.age_midpoint.isDefined && response.age_midpoint.get < 20.0).show()
+typedDataset.groupBy(typedDataset.col("occupation")).count().show()
+
+DATASET vs RDD
+----------------
+
+RDD to DS conversion:
+import session.implicits._
+rddname.toDS()
+
+using RDDs when:
+– Low-level transformation, actions and control on our dataset are needed.
+– Unstructured data, such as media streams or streams of text.
+– Need to manipulate our data with functional programming constructs than domain
+specific expressions.
+– Optimization and performance benefits available with Datasets are NOT needed.
+
+Use Datasets when
+• Rich semantics, high-level abstractions, and domain specific APIs are
+needed.
+• Our processing requires aggregation, averages, sum, SQL queries and
+columnar access on semi-structured data.
+• We want a higher degree of type-safety at compile time, typed JVM
+objects, and the benefit of Catalyst optimization.
+• Unification and simplification of APIs across Spark Libraries are needed.
+
+Performance Tuning:
+______________________
+
+1. caching - responseDatset.cache() uses columnar storage
+2. "spark.sql.codegen" - val session= SparkSession.builder()
+                                      .config("spark.sql.codegen","false")
+                                      .config("spark.sql.inMemoryColumnarStorage.batchsize",value=1000)
+                                      .getOrCreate()
+
+this tell spark sql to compile every query to java byte code before executing.Very useful for long or repeated queries as spark generates specific
+code to run them.
+
+3. "spark.sql.inMemoryColumnarStorage.batchsize" - with large batch size can improve memory utilization & compression. But 
+   has risk of OutOfMemory error if row has 100+ columns
+
+4. use of mapValues over map() for KV pair RDD
+
+
+VV IMPORTANT:
+https://www.level-up.one/avoid-these-mistakes-while-writing-apache-spark-program/
+
+
+Practice example : Typed dataset
+add: libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+
+import org.apache.spark.sql.SparkSession
+import org.apache.log4j.{Logger,Level}
+
+case class Response(country:String,age_midpoint:Option[Double],occupation:String,salary_midpoint:Option[Double]);
+
+object TypesDataSet{
+
+  val AGE_MIDPOINT = "age_midpoint"
+  val SALARY_MIDPOINT = "salary_midpoint"
+  val SALARY_MIDPOINT_BUCKET = "salaryMidpointBucket"
+
+
+ def main(args: Array[String]):Unit={
+
+ 	Logger.getLogger("org").setLevel(Level.ERROR)
+ 	val session=SparkSession.builder().appName("MyTypedDataSet").master("yarn").getOrCreate()
+
+ 	val responses=session.read.option("header","true").option("inferschema","true").csv("2016-stack-overflow-survey-responses.csv")
+ 	// session.read returns a DataFrame Reader object
+
+    val responseWithSelectedColumns = responses.select("country","age_midpoint","occupation","salary_midpoint")
+
+    import session.implicits._ 
+    val typedDataset = responseWithSelectedColumns.as[Response]
+    // Converting it from Row type dataset to Response type dataset
+
+    System.out.println("Starting with TypedDataset")
+    typedDataset.printSchema()
+    typedDataset.show()
+
+    System.out.println("=== Print responses for country Afghanistan,occupations withs values ===")
+    typedDataset.filter(response => response.country_name=="Afghanistan").groupBy(typedDataset.col("occupation")).count().show()
+
+    System.out.println("=== Print responses with average mid age less than 20 & sorted by desc order of salary_midpoint ===")
+    typedDataset.filter(response => response.age_midpoint.isDefined && response.age_midpoint.get < 20.0 ).orderBy(typedDataset.col("SALARY_MIDPOINT").desc).show()
+
+ 	session.stop()
+
+ }
+
+}
+
+
+Spark DF APIs:
+______________________
+
+Spark execution process flow:
+
+DF/DS/Spark sql code --> Logical execution plan (using Catalog -Sparks list of table & column names) --> (Optimizations) --> Physical excution plan
+ -->execution on cluster (generates native java bytecode)
+
+1 Logical plan -> 1:n physical execution plan ==> passed to Cost model --> Best physical plan --> execute on cluster
+
+
+df.printSchema()
+spark.read.format("json").load("/../../2015-summary.json").schema  ==> gives schema in scala StructType Format
+
+manually creating schema:
+
+df.columns --> shows the columns
+df.first()
+df.createOrReplaceTempView("dftable")
+
+DF SELECT / FILTER /UNIQUE
+______________________
+
+df.select("column1","column2","column3")
+df.select(expr("*"),expr("column1 AS renamed_col1"),lit("1").alias("One"))
+df.withColumn("Destination_2",expr("Destination"))
+   .withColumnRenamed("oldname","newname")
+
+df.withColumn("NewcolumnName",col("oldcolname").cast("long"))
+df.filter(col("count")<2).filter(col("country") =!= "England").distinct() 
+df.take(100).limit(5).show(flase)
+
+Nulls in data:
+______________
+
+coalesce(col1,col2)
+df.na.fill(replacement value ,Seq(col1,col2))
+
+scala> df.select(col("country"),coalesce(col("women_on_team"),lit("0").alias("zero")).alias("filled_w_on_t")).show(5,false)
++-----------+-------------+
+|country    |filled_w_on_t|
++-----------+-------------+
+|Afghanistan|0            |
+|Afghanistan|3            |
+|Afghanistan|0            |
+|Afghanistan|2            |
+|Afghanistan|0            |
++-----------+-------------+
+
+scala> df.select(col("country"),col("women_on_team")).na.fill("0",Seq("women_on_team")).show(5,false)
++-----------+-------------+
+|country    |women_on_team|
++-----------+-------------+
+|Afghanistan|0            |
+|Afghanistan|3            |
+|Afghanistan|0            |
+|Afghanistan|2            |
+|Afghanistan|0            |
++-----------+-------------+
+
+where,filter,select takes column names
+expr,lit can work "with" col for evaluation.
+
+val df3=df2.where(col("occupation").isNotNull).filter(col("occupation_group").isNotNull).where(col("country").isNotNull)
+df5.select(col("country"),col("occupation").alias("job"),lit("TEST LIT").alias("test_literal"),col("salary_midpoint"),expr("salary_midpoint * 3.14/100").alias("slmdpnt")).show(5,false)
+
+df2.withColumn("isDeveloper",upper(col("occupation")).contains("DEVELOPER")).where(col("isDeveloper")=!=false).count()
+
++-----------+----------------------+------------+---------------+-------+
+|country    |job                   |test_literal|salary_midpoint|slmdpnt|
++-----------+----------------------+------------+---------------+-------+
+|Afghanistan|Mobile developer - iOS|TEST LIT    |45000.0        |1413.0 |
+|Afghanistan|DevOps                |TEST LIT    |5000.0         |157.0  |
+|Afghanistan|Growth hacker         |TEST LIT    |210000.0       |6594.0 |
+|Afghanistan|Back-end web developer|TEST LIT    |5000.0         |157.0  |
+|Albania    |Back-end web developer|TEST LIT    |5000.0         |157.0  |
++-----------+----------------------+------------+---------------+-------+
+
+DF sort
+______________________
+
+df.orderBy(desc("count"),asc("DEST_COUNTRY_NAME")).show(2)
+
+Optimization: 
+"For optimization it is good to sort within partition before appying another set of transformations."
+spark.read.json("/../../summary.json")
+.sortWithinPartitions(desc("count"))
+
+DF repartition vs coalesce
+______________________
+
+Repartition results in full-shuffle of data,regardless of whether one is needed.
+1. Repartion when future no of partions are higher than current no of partitions(df.rdd.getNumPartitions)
+   df.repartition(10)
+
+2. Repartition when we need to partition it by a set of columns
+   df.repartition(col("DEST_COUNTRY_NAME") 
+   df.repartition(10,col("DEST_COUNTRY_NAME")   
+
+Coalesce will not result into full_shuffle of data, it tries to combine partitions.
+df.coalesce(2)
+
+DF "with" data types
+______________________
+
+import org.apache.spark.sql.functions._ 
+
+use of === & =!= for chcking column equalto & not eqaulto or we can use expr.
+
+df.where(col("InvoiceNo")===56555)
+df.where("InvoiceNo = 56555")
+
+multiple filter condition combined:
+val fl1 = col("DotCode")==="DOT"
+val fl2 = col("UnitPrice")>600
+val fl3 = col("Description").contains("POSTAGE")
+
+df.withColumn("IsExpensive",fl1.and(fl2.or(fl3))).where("IsExpensive").show(5,false)
+df.withColumn("IsExpensive",expr("NOT UnitPrice <=250"))
+
+
+
+"working with numbers:"
+______________________
+
+df.selectExpr("CustomerId","(Power((Quantity * UnitPrice),2.0))+5 as realQuantity").show(2)
+round to 2 decimal place -> df.select(round(col("UnitPrice"),2).alias("rounded"),col("UnitPrice"))
+
+"working with string:"
+______________________
+
+df.select(lpad(lit("HELLO"),3,"_").as("lp"),rpad(lit("HELLO"),3,"_").as("rp"))
+look for substring operation:
+
+substring(Column str,int pos,int len)
+
+Substring starts at pos and is of length len when str is String type 
+or returns the slice of byte array that starts at pos in byte and is of length len when str is Binary type 
+
+substring_index(Column str,String delim,int count)
+
+Returns the substring from string str before count occurrences of the delimiter delim. If count is positive, everything the 
+left of the final delimiter (counting from left) is returned. If count is negative, every to the right of the final delimiter 
+(counting from the right) is returned. substring_index performs a case-sensitive match when searching for delim.
+
+instr(str, substr) - Returns the (1-based) index of the first occurrence of substr in str.
+
+Examples: SELECT instr('SparkSQL', 'SQL'); --> 6
+
+____________________
+(Question: Get only 1st part from occuaption till developer? use of substr & instr like operation)
+
+val df4=df3.withColumn("startpos",lit("1")).withColumn("INSTRcheck",instr(col("occupation"),"developer")-1)
+val df5=df4.withColumn("job",col("occupation").substr(col("startpos"),col("INSTRcheck")))
+
++-----------+------------------------+------------+---------------+-----------+----------+--------+---------------+
+|country    |occupation              |age_midpoint|salary_midpoint|isDeveloper|INSTRcheck|startpos|job            |
++-----------+------------------------+------------+---------------+-----------+----------+--------+---------------+
+|Afghanistan|Mobile developer - iOS  |32.0        |45000.0        |true       |7         |1       |Mobile         |
+|Afghanistan|Back-end web developer  |27.0        |5000.0         |true       |13        |1       |Back-end web   |
+|Albania    |Back-end web developer  |22.0        |5000.0         |true       |13        |1       |Back-end web   |
+|Albania    |Full-stack web developer|27.0        |5000.0         |true       |15        |1       |Full-stack web |
+|Albania    |Full-stack web developer|22.0        |15000.0        |true       |15        |1       |Full-stack web |
++-----------+------------------------+------------+---------------+-----------+----------+--------+---------------+
+____________________
+
+
+"Regular expression:" extract values from string or replace some values
+regexp_extract
+regexp_replace
+
+
+val simpleColors=Seq("black","white","red","blue","green")
+val regexString=simpleColors.map(_.toUpperCase).mkString("|")
+
+df.select(regexp_replace(col("Description"),regexString,"COLOR")).alias("color_clean"),col("Description")
+
+retruns the description with colors replaced
+
+df.select(regexp_extract(col("Description"),regexString,1).alias("color_clean"),col("Description"))
+
+returns colors found in description from list colors in regexString.
+
+contains method:
+______________________
+
+val containsBlack=col("Description").contains("Black")
+val conatinsWhite=col("Description").contains("White")
+
+df.withColumn("hasSimplecolors",containsBlack.and(conatinsWhite)).where("hasSimplecolors").select("Description")
+
+
+"working with Dates:"
+______________________
+
+date_format(Column dateExpr, String format)   Date --> String
+Converts a date/timestamp/string to a value of string in the format specified by the date format given by the second argument.
+
+to_timestamp(Column s, String fmt)
+Convert time string to a Unix timestamp (in seconds) with a specified format 
+(see [http://docs.oracle.com/javase/tutorial/i18n/format/simpleDateFormat.html]) to Unix timestamp (in seconds), return null if fail.
+
+to_date(Column e, String fmt)  String--> Date
+Converts the column into a DateType with a specified format 
+(see [http://docs.oracle.com/javase/tutorial/i18n/format/simpleDateFormat.html]) return null if fail.
+
+current_date,current_timestamp,date_sub,date_add,datediff,
+val dateFormat="yyyy-dd-MM" <-- these uses javaSimpleDateformat
+
+
+scala> df4.withColumn("today",current_date).withColumn("sometimestamp",current_timestamp).withColumn("todayfrmt2",date_format(col("today"),"MM/dd/yyyy")).withColumn("todate2",to_date(col("todayfrmt2"),"MM/dd/yyyy")).printSchema()
+root
+ |-- country: string (nullable = true)
+ |-- job: string (nullable = true)
+ |-- test_literal: string (nullable = false)
+ |-- salary_midpoint: double (nullable = true)
+ |-- slmdpnt: double (nullable = true)
+ |-- today: date (nullable = false)
+ |-- sometimestamp: timestamp (nullable = false)
+ |-- todayfrmt2: string (nullable = false)
+ |-- todate2: date (nullable = true)
+
+
+scala> df4.withColumn("today",current_date).withColumn("sometimestamp",current_timestamp).withColumn("todayfrmt2",date_format(col("today"),"MM/dd/yyyy")).withColumn("todate2",to_date(col("todayfrmt2"),"MM/dd/yyyy")).show(5,false)
++-----------+----------------------+------------+---------------+-------+----------+-----------------------+----------+----------+
+|country    |job                   |test_literal|salary_midpoint|slmdpnt|today     |sometimestamp          |todayfrmt2|todate2   |
++-----------+----------------------+------------+---------------+-------+----------+-----------------------+----------+----------+
+|Afghanistan|Mobile developer - iOS|TEST LIT    |45000.0        |1413.0 |2019-07-25|2019-07-25 04:05:50.557|07/25/2019|2019-07-25|
+|Afghanistan|DevOps                |TEST LIT    |5000.0         |157.0  |2019-07-25|2019-07-25 04:05:50.557|07/25/2019|2019-07-25|
+|Afghanistan|Growth hacker         |TEST LIT    |210000.0       |6594.0 |2019-07-25|2019-07-25 04:05:50.557|07/25/2019|2019-07-25|
+|Afghanistan|Back-end web developer|TEST LIT    |5000.0         |157.0  |2019-07-25|2019-07-25 04:05:50.557|07/25/2019|2019-07-25|
+|Albania    |Back-end web developer|TEST LIT    |5000.0         |157.0  |2019-07-25|2019-07-25 04:05:50.557|07/25/2019|2019-07-25|
++-----------+----------------------+------------+---------------+-------+----------+-----------------------+----------+----------+
+only showing top 5 rows
+
+
+______________________
+
+agg & join:
+
+val df=spark.read.option("header","true").option("inferschema","true").csv("2016-stack-overflow-survey-responses.csv")
+val df2=df.where(col("occupation").isNotNull).filter(col("occupation_group").isNotNull).where(col("country").isNotNull)
+val df3=df2.select(col("country"),col("occupation").alias("job"),lit("TEST LIT").alias("test_literal"),col("salary_midpoint"),expr("salary_midpoint * 3.14/100").alias("slmdpnt"))
+
+scala> df3.groupBy("country").agg(first("job"),last("job"),round(avg("salary_midpoint"),2),round(avg("slmdpnt"),2),count("job")).show(5,false)
++-----------+----------------------+------------------------------+------------------------------+----------------------+----------+
+|country    |first(job, false)     |last(job, false)              |round(avg(salary_midpoint), 2)|round(avg(slmdpnt), 2)|count(job)|
++-----------+----------------------+------------------------------+------------------------------+----------------------+----------+
+|Germany    |Back-end web developer|Embedded application developer|46636.36                      |1464.38               |137       |
+|Afghanistan|Mobile developer - iOS|Back-end web developer        |66250.0                       |2080.25               |4         |
+|Cambodia   |Back-end web developer|Full-stack web developer      |5000.0                        |157.0                 |3         |
+|France     |Graphics programmer   |Back-end web developer        |38910.26                      |1221.78               |276       |
+|Algeria    |Desktop developer     |Student                       |30000.0                       |942.0                 |8         |
++-----------+----------------------+------------------------------+------------------------------+----------------------+----------+
+
+
+Window function:
+
+Step-1 Window specification:
+
+import org.apache.spark.sql.expressions.Window
+
+val windowspec=Window.partitionBy("country").orderBy(desc("salary_midpoint")).rowsBetween(Window.unboundedPreceding,Window.currentRow)
+
+Step-2: Aggregate function selection: returns a column
+
+val maxsal=max(col("salary_midpoint")).over(windowspec)
+val firstjob=first(col("job")).over(windowspec)
+val rnk=rank().over(windowspec)
+
+Step-3: Use in select statement
+
+df3.select(expr("*"),maxsal.alias("maxsal"),firstjob.alias("firstjob"),rnk.alias("rnk"))
+   .select(expr("*"),expr("maxsal - salary_midpoint").alias("diff"))
+
++-------+--------------------------------------+------------+---------------+-------+--------+--------------------------------------+---+-------+
+|country|job                                   |test_literal|salary_midpoint|slmdpnt|maxsal  |firstjob                              |rnk|diff   |
++-------+--------------------------------------+------------+---------------+-------+--------+--------------------------------------+---+-------+
+|Germany|Executive (VP of Eng., CTO, CIO, etc.)|TEST LIT    |165000.0       |5181.0 |165000.0|Executive (VP of Eng., CTO, CIO, etc.)|1  |0.0    |
+|Germany|Executive (VP of Eng., CTO, CIO, etc.)|TEST LIT    |145000.0       |4553.0 |165000.0|Executive (VP of Eng., CTO, CIO, etc.)|2  |20000.0|
+|Germany|Desktop developer                     |TEST LIT    |125000.0       |3925.0 |165000.0|Executive (VP of Eng., CTO, CIO, etc.)|3  |40000.0|
+|Germany|System administrator                  |TEST LIT    |125000.0       |3925.0 |165000.0|Executive (VP of Eng., CTO, CIO, etc.)|3  |40000.0|
+|Germany|Engineering manager                   |TEST LIT    |125000.0       |3925.0 |165000.0|Executive (VP of Eng., CTO, CIO, etc.)|3  |40000.0|
++-------+--------------------------------------+------------+---------------+-------+--------+--------------------------------------+---+-------+
+
+
+PIVOT operation in DF:
+______________________
+
+scala> df3.printSchema()
+root
+ |-- country: string (nullable = true)
+ |-- job: string (nullable = true)
+ |-- test_literal: string (nullable = false)
+ |-- salary_midpoint: double (nullable = true)
+ |-- slmdpnt: double (nullable = true)
+
+val df4=df3.groupBy("job","country").max("salary_midpoint").orderBy("job")
+val df5=df4.groupBy("job").pivot("country").agg(first("max(salary_midpoint)"))  --> "getting highest salary for each job with country names in diff columns:"
+
+Entire sample:
+scala> df5.show(5,false)
++------------------------------------------------+-----------+-------+-------+-------+---------+-------+---------+-------+----------+-------+-------+----------+-------+--------+------+-------+------------------+--------+--------+--------+-------+--------+-------+-------+-------+--------+----------+-------+------+--------------+--------+------------------+-------+-------+-----------+-------+-------+--------+-------+--------+
+|job                                             |Afghanistan|Albania|Algeria|Andorra|Argentina|Armenia|Australia|Austria|Azerbaijan|Bahamas|Bahrain|Bangladesh|Belarus|Belgium |Belize|Bolivia|Bosnia Herzegovina|Botswana|Brazil  |Bulgaria|Burkina|Cambodia|Canada |Chile  |China  |Colombia|Costa Rica|Croatia|Cyprus|Czech Republic|Denmark |Dominican Republic|Ecuador|Egypt  |El Salvador|Estonia|Finland|France  |Georgia|Germany |
++------------------------------------------------+-----------+-------+-------+-------+---------+-------+---------+-------+----------+-------+-------+----------+-------+--------+------+-------+------------------+--------+--------+--------+-------+--------+-------+-------+-------+--------+----------+-------+------+--------------+--------+------------------+-------+-------+-----------+-------+-------+--------+-------+--------+
+|Analyst                                         |null       |null   |null   |null   |15000.0  |null   |55000.0  |null   |null      |null   |null   |null      |null   |125000.0|null  |null   |null              |null    |25000.0 |5000.0  |null   |null    |55000.0|null   |null   |null    |null      |null   |null  |25000.0       |105000.0|null              |null   |null   |null       |null   |45000.0|55000.0 |null   |null    |
+|Back-end web developer                          |5000.0     |15000.0|null   |null   |210000.0 |5000.0 |105000.0 |75000.0|15000.0   |null   |null   |15000.0   |null   |145000.0|null  |null   |5000.0            |null    |65000.0 |35000.0 |null   |5000.0  |95000.0|95000.0|35000.0|15000.0 |null      |25000.0|null  |5000.0        |145000.0|15000.0           |35000.0|15000.0|null       |85000.0|75000.0|95000.0 |5000.0 |105000.0|
+|Business intelligence or data warehousing expert|null       |null   |null   |null   |null     |null   |null     |65000.0|null      |null   |null   |null      |null   |null    |null  |null   |null              |null    |5000.0  |null    |null   |null    |null   |null   |null   |null    |null      |null   |null  |null          |165000.0|null              |null   |null   |null       |null   |65000.0|45000.0 |null   |75000.0 |
+|Data scientist                                  |null       |null   |null   |35000.0|15000.0  |null   |105000.0 |45000.0|null      |null   |null   |null      |null   |45000.0 |null  |null   |null              |null    |45000.0 |null    |null   |null    |null   |null   |null   |null    |null      |null   |5000.0|null          |135000.0|null              |null   |null   |null       |null   |75000.0|65000.0 |null   |55000.0 |
+|Database administrator                          |null       |null   |null   |null   |5000.0   |null   |null     |null   |null      |null   |null   |null      |null   |165000.0|null  |null   |null              |null    |105000.0|null    |null   |null    |null   |null   |45000.0|null    |35000.0   |null   |null  |null          |null    |null              |null   |null   |null       |null   |null   |145000.0|null   |null    |
++------------------------------------------------+-----------+-------+-------+-------+---------+-------+---------+-------+----------+-------+-------+----------+-------+--------+------+-------+------------------+--------+--------+--------+-------+--------+-------+-------+-------+--------+----------+-------+------+--------------+--------+------------------+-------+-------+-----------+-------+-------+--------+-------+--------+
+only showing top 5 rows
+
+
+scala> df5.select(col("job"),col("Australia"),col("Germany"),col("France")).show(5,false)
++------------------------------------------------+---------+--------+--------+
+|job                                             |Australia|Germany |France  |
++------------------------------------------------+---------+--------+--------+
+|Analyst                                         |55000.0  |null    |55000.0 |
+|Back-end web developer                          |105000.0 |105000.0|95000.0 |
+|Business intelligence or data warehousing expert|null     |75000.0 |45000.0 |
+|Data scientist                                  |105000.0 |55000.0 |65000.0 |
+|Database administrator                          |null     |null    |145000.0|
++------------------------------------------------+---------+--------+--------+
+
+
+Join in DF:
+______________________
+
+DF1.join(DF2,join_expr,join_type)
+
+inner join does not need to specify join_type-can be omitted
+
+scala> val setb_df3=setb_df2.agg(sum("women_on_team")).select(col("country"),col("sum(women_on_team)").cast("Int").alias("WOT"))
+setb_df3: org.apache.spark.sql.DataFrame = [country: string, WOT: int]
+
+scala> setb_df3.show(5,false)
++-----------+---+
+|country    |WOT|
++-----------+---+
+|Germany    |92 |
+|Afghanistan|6  |
+|Cambodia   |4  |
+|France     |197|
+|Algeria    |0  |
++-----------+---+
+
+scala> val join_data=df3.join(setb_df3,df3.col("country")===setb_df3.col("country"))
+19/07/25 10:38:52 WARN Column: Constructing trivially true equals predicate, 'country#12 = country#12'. Perhaps you need to use aliases.
+join_data: org.apache.spark.sql.DataFrame = [country: string, job: string ... 5 more fields]
+
+scala> join_data.show(5,false)
++-----------+----------------------+------------+---------------+-------+-----------+---+
+|country    |job                   |test_literal|salary_midpoint|slmdpnt|country    |WOT|
++-----------+----------------------+------------+---------------+-------+-----------+---+
+|Afghanistan|Mobile developer - iOS|TEST LIT    |45000.0        |1413.0 |Afghanistan|6  |
+|Afghanistan|DevOps                |TEST LIT    |5000.0         |157.0  |Afghanistan|6  |
+|Afghanistan|Growth hacker         |TEST LIT    |210000.0       |6594.0 |Afghanistan|6  |
+|Afghanistan|Back-end web developer|TEST LIT    |5000.0         |157.0  |Afghanistan|6  |
+|Albania    |Back-end web developer|TEST LIT    |5000.0         |157.0  |Albania    |16 |
++-----------+----------------------+------------+---------------+-------+-----------+---+
+only showing top 5 rows
+
+
+scala> val join_data=df3.join(setb_df3,df3.col("country")===setb_df3.col("country"),"left_outer")
+19/07/25 10:39:40 WARN Column: Constructing trivially true equals predicate, 'country#12 = country#12'. Perhaps you need to use aliases.
+join_data: org.apache.spark.sql.DataFrame = [country: string, job: string ... 5 more fields]
+
+scala> join_data.show(5,false)
++-----------+----------------------+------------+---------------+-------+-----------+---+
+|country    |job                   |test_literal|salary_midpoint|slmdpnt|country    |WOT|
++-----------+----------------------+------------+---------------+-------+-----------+---+
+|Afghanistan|Mobile developer - iOS|TEST LIT    |45000.0        |1413.0 |Afghanistan|6  |
+|Afghanistan|DevOps                |TEST LIT    |5000.0         |157.0  |Afghanistan|6  |
+|Afghanistan|Growth hacker         |TEST LIT    |210000.0       |6594.0 |Afghanistan|6  |
+|Afghanistan|Back-end web developer|TEST LIT    |5000.0         |157.0  |Afghanistan|6  |
+|Albania    |Back-end web developer|TEST LIT    |5000.0         |157.0  |Albania    |16 |
++-----------+----------------------+------------+---------------+-------+-----------+---+
+only showing top 5 rows
+
+
+scala> join_data.where(col("WOT").isNull)
+res19: org.apache.spark.sql.Dataset[org.apache.spark.sql.Row] = [country: string, job: string ... 5 more fields]
+
+scala> join_data.where(col("WOT").isNull).show(5,false)
++-------+-------+------------+---------------+-------+-------+----+
+|country|job    |test_literal|salary_midpoint|slmdpnt|country|WOT |
++-------+-------+------------+---------------+-------+-------+----+
+|Bahrain|Student|TEST LIT    |45000.0        |1413.0 |Bahrain|null|
+
+
+join on complex types:
+DF1.join(DF2,expr("array_contains(spark_status_codes,id)"))  --> this checks if id is present i arry of spark_status_codes
+
+Join operation: 2 types:
+1. Shuffle join - all to all communication - results in network congestion if not partitioned well.
+2. Broadcast join
+
+Big-to-Big Table:
+______________________
+prefers shuffle join
+
+Big table to small table: Boradcast join - table small enough to filt in memory of a single worker node with some breathing space.
+generally spark automatically detects if it can brodcast. To give a hint we can mention:
+
+DF1.join(broadcast(DF2),join_expr)
+
+
+Data Sources:
+______________________
+
+Read api: need a DataFrameReader object which we get from session.read
+DataFrameReader.format(..).mode(..).option(...).schema(..).load()
+
+format -> csv,json,parquet,orc,jdbc/odbc,textFile
+mode -> permissive(set fields to null when encounter corrupted records),dropMalformed,failFast(Fails upon encountering malformed records)
+
+
+Write api : DataFrameWriter .format(..)
+                            .mode(..)  ---> append,overwrite,errIfExists,ignore
+                            .option(..)
+                            .partitionBy(..)
+                            .bucketBy(..)
+                            .sortBy(..)
+                            .save()
+ partitionBy ,sortBy,bucketBy only works for file.
+
+
+BUT BUCKETING IS ONLY ALLOWED FOR SPARK MANGED TABLE;
+_______________________________________________________
+
+
+scala> df3.write.partitionBy("country").bucketBy(3,"salary_midpoint").sortBy("salary_midpoint").parquet("/user/8314home/filetarget/")
+org.apache.spark.sql.AnalysisException: 'save' does not support bucketing right now;
+
+ scala> df3.write.partitionBy("country").bucketBy(3,"salary_midpoint").sortBy("salary_midpoint").saveAsTable("testTargetFile")
+19/08/04 08:57:00 WARN HiveExternalCatalog: Persisting bucketed data source table `default`.`testtargetfile` into Hive metastore in Spark SQL specific format, which is NOT compatible with Hive.
+
+
+""" 
+hive> show create table default.testtargetfile;
+OK
+CREATE TABLE `default.testtargetfile`(
+  `col` array<string> COMMENT 'from deserializer')
+PARTITIONED BY (
+  `country` string)
+ROW FORMAT SERDE
+  'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
+WITH SERDEPROPERTIES (
+  'path'='hdfs://nn01.itversity.com:8020/apps/hive/warehouse/testtargetfile')
+STORED AS INPUTFORMAT
+  'org.apache.hadoop.mapred.SequenceFileInputFormat'
+OUTPUTFORMAT
+  'org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat'
+LOCATION
+  'hdfs://nn01.itversity.com:8020/apps/hive/warehouse/testtargetfile'
+TBLPROPERTIES (
+  'spark.sql.create.version'='2.3.0.2.6.5.0-292',
+  'spark.sql.partitionProvider'='catalog',
+  'spark.sql.sources.provider'='parquet',
+  'spark.sql.sources.schema.bucketCol.0'='salary_midpoint',
+  'spark.sql.sources.schema.numBucketCols'='1',
+  'spark.sql.sources.schema.numBuckets'='3',
+  'spark.sql.sources.schema.numPartCols'='1',
+  'spark.sql.sources.schema.numParts'='1',
+  'spark.sql.sources.schema.numSortCols'='1',
+  'spark.sql.sources.schema.part.0'='{\"type\":\"struct\",\"fields\":[{\"name\":\"job\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"test_literal\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"salary_midpoint\",\"type\":\"double\",\"nullable\":true,\"metadata\":{}},{\"name\":\"slmdpnt\",\"type\":\"double\",\"nullable\":true,\"metadata\":{}},{\"name\":\"country\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}}]}',
+  'spark.sql.sources.schema.partCol.0'='country',
+  'spark.sql.sources.schema.sortCol.0'='salary_midpoint',
+  'transient_lastDdlTime'='1564923431')
+Time taken: 2.054 seconds, Fetched: 28 row(s)
+
+
+[8314home@gw03 ~]$ hdfs dfs -ls hdfs://nn01.itversity.com:8020/apps/hive/warehouse/testtargetfile/country=France
+Found 3 items
+-rw-r--r--   2 8314home hdfs       1770 2019-08-04 08:57 hdfs://nn01.itversity.com:8020/apps/hive/warehouse/testtargetfile/country=France/part-00000-c0e3c461-f3a4-49a9-9729-2fdcef10aac1_00000.c000.snappy.parquet
+-rw-r--r--   2 8314home hdfs       1419 2019-08-04 08:57 hdfs://nn01.itversity.com:8020/apps/hive/warehouse/testtargetfile/country=France/part-00000-c0e3c461-f3a4-49a9-9729-2fdcef10aac1_00001.c000.snappy.parquet
+-rw-r--r--   2 8314home hdfs       1817 2019-08-04 08:57 hdfs://nn01.itversity.com:8020/apps/hive/warehouse/testtargetfile/country=France/part-00000-c0e3c461-f3a4-49a9-9729-2fdcef10aac1_00002.c000.snappy.parquet
+[8314home@gw03 ~]$
+
+ """
+Spark Managed Table:
+______________________
+
+When we defines a table from files on disk,we are defining an unmanaged table.
+When we use saveAsTable() on a dataframe , we are creating a manged table.
+For managed table spark will manage data & as well as metadata.Spark writes to default hive location
+spark.sql.warehouse.dir => /user/hive/warehouse
+
+
+ csv options - sep(seprator string),header(true,false),inferschema(T/F spark infer column types),nullValue(which string represents null value in file)
+
+ Json file options: prefers line delimited json files rather than multi-line json file .line delimited json file allows rows to be appended
+ at the end of file.
+
+ SQL databases:
+ ______________________
+
+Need two things
+
+1. Include driver for db in spark class path,provide porper jar for driver itself. eg: --jars /usr/share/java/mysql-connector-java.jar
+2. give jdbc format , url , driver , username/pass & tablename
+
+ val pgDF=spark.read.format("jdbc")
+               .option("driver","org.postgresql.Driver")
+               .option("url","jdbc:postgresql://database_driver")
+               .option("dbtable","schema.tablename")
+               .option("user","username")
+               .option("password","mypassword")
+               .load()
+
+PushDownQuery Optimization:  Spark attempts to filter data in database itself before creating dataframe.
+explain plan: under "PushedFilters".
+In a better attempt,we can even pass entire sql query to database.
+
+Step-1 define query string outside: 
+val query="""( select distinct flight from flight_info where country_name in ('Sweden','USA'))"""
+
+Step-2 Mention in option("dbtable",query)
+we can push predicates down to db connection itself.
+ 
+reading parallel from DB: option("numPartitions",10)
+
+writting to SQL DB:
+val driverpath="jdbc:sqlite://tmp/mysqlite.db"
+val prop=new java.util.properties
+props.setProperty("driver","org.sqlite.JDBC")
+
+csvFiles.write.mode("append").jdbc(driverpath,tablename,prop)
+
+
+TESTED
+______________________
+
+need to supply,jar file with spark shell. 
+[8314home@gw03 ~]$ spark-shell --master yarn --num-executors 2 --executor-memory 3G --executor-cores 2 --jars /usr/share/java/mysql-connector-java.jar
+
+--jars /usr/share/java/mysql-connector-java.jar
+val mysqlDF=spark.read.format("jdbc").option("url","jdbc:mysql://ms.itversity.com:3306/retail_db").option("driver","com.mysql.jdbc.Driver").option("dbtable","departments").option("user","retail_user").option("password","itversity").load()
+
+
+
+Performance tuning:
+______________________
+Indirect Performance enhancements:
+
+1. Use of dataframes,DS,SQL over RDD.they compile down to RDD with their own optimization.
+
+2. Use of Kryo serialization it is more compact & efficient than Java serialization, spark.serializer=org.apache.spark.serializer.KryoSerializer , Register the classes you would like to register 
+   with spark.kryo.classesToRegister config.
+   conf.registerKryoClasses(Array(classOf[MyClass1],classOf[MyClass2]))
+
+3. Dynamic allocation: application can give resources back to cluster if they are no longer used and request them later when there is a demand.
+   This feature is useful if multiple application share resources in cluster.
+   spark.dynamicAllocation.enabled=true
+
+4. scheduling mode, spark.scheduler.mode=FAIR to facilitate better sharing of resources accross multiple users in cluster.
+   --max-executor-cores defines max no of executors that your application will need.it is a guard to make sure your application does not take
+   all cores in cluster.
+
+5. File Based Long term storage:
+   Apache Parquet - stores data in binary fils with column oriented storage, has schema inbuilt.Keeps some stats about each file,to quickly skip
+   data during query.
+
+6. Splitable file types & compression: splitable files - multipls tasks can parallely work with each split.Use gzip,lz4 type compression done
+   via hadoop jobs.These files are generally splitable.
+
+7. Table partitioning: Storing files in separate directories based on a key like date field in data.Partitioning data correctly allows to skip 
+   irrelevant files when searching for values within specific key range.
+   Too fine granuled partitioning can result in many small files and a great deal of overhead when trying to list all the files.
+
+8. Bucketing: a way of physically splitting up the data.allows consistent distribution accross partitions instead of skewed 
+   data in one or two partitions.
+
+9. No of files & size of files:
+   Too many small files can cause scheduler to work harder to locate data & lauch read tasks.This can increase network & scheduling overhead 
+   of the job Having few large file will cause the tasks to run longer.Recommended size for each file is to have few 100 MB of data.
+
+   one setting: maxRecordsPerFile can specify how many records will go to each file.
+
+10. Spark with HDFS - running spark on nodes where storage system is also running can support locality hint.Spark will try to schedule 
+   tasks close to each input block of data.
+
+11. Statistics collection: Spark cost based optimizer can take help of stats collected on named table ,not arbitary DFs & RDDs.
+     Analyze table table_name compute Statistics.
+     Analyze table table_name compute Statistics For Columns col1,col2,col3. slower to collect but provide more info for cost based optimizer 
+     to help with join,aggs.
+
+12. Memory Pressure & Garbage Collection:
+
+
+
+Direct Performance Enhancements:
+
+1. Parallelism: Speeding a Stage - increase degre of Parallelism.Recommended 1 vcore = 2/3 tasks, if stages process large amount of data.
+   spark.default.parallelism 
+   spark.sql.shuffle.partitions 
+   calculation => No of partitions = No of tasks
+
+2. Query pushdown, filters pushed to data sources.Filter data early.
+
+3. Repartition & Coalesce:
+   Repartition helps balancing data accross cluster.coalesce merges partitions on same node,does not perform full shuffle.
+   repartition-->cache-->join will be helpful.
+
+4. Caching:
+
+caching places data across executors of cluster.But involves serialization,deserialization,storage costs.
+Lazy operation --> things will be cached when they are accessed.-Data will be cached for the first time when an action will be called on it.
+
+5. Join:
+
+broadcast one table,bucketing data properly before join- will avoid large shuffle.
+
+First Aids: - later
+
+
+XEROX - not much -later
+
+______________________
+
+Spark Streaming: from book
+______________________
+
+
+project:
+1. Sqoop/Hive project - dly_order_attribute workflow
+2. Attribution:
+Streaming project - MS Payload
+
+----------------
+
+Spark-Python:
+-------------
+1. Most popular movies based on rating.
+
+from pyspark.sql import SparkSession, Row
+
+
+spark = SparkSession.builder.appName("DF_most_popular_movie").master("local[*]").getOrCreate()
+
+
+def parse_line(line):
+    fields = line.split("\t")
+    user_id = int(fields[0])
+    movie_id = int(fields[1])
+    rating = int(fields[2])
+    timeinfo = fields[3]
+    return Row(user_id=user_id, movie_id=movie_id, rating=rating, timeinfo=timeinfo)
+
+
+movie_ratings_rdd = spark.sparkContext.textFile("file:///Users/smukherjee/u.data").map(lambda l: parse_line(l))
+movie_ratings_df = movie_ratings_rdd.toDF()
+
+# movie_names_rdd = spark.sparkContext.textFile("file:///Users/smukherjee/u.item").map(lambda l: parse_name(l))
+movie_names_df = spark.read.csv("file:///Users/smukherjee/u.item", sep="|",
+                                encoding="ISO-8859-1").select("_c0", "_c1")\
+                                .withColumnRenamed("_c0", "movie_no")\
+                                .withColumnRenamed("_c1", "movie_name")
+
+
+print("movie_names_df")
+movie_names_df.printSchema()
+
+most_popular_movie_df = movie_ratings_df.groupBy("movie_id").count().orderBy("count", ascending=False)
+
+top5_most_popular_movies = most_popular_movie_df.join(movie_names_df,
+                                                 most_popular_movie_df.movie_id == movie_names_df.movie_no, "inner")\
+    .select("movie_name", "count").coalesce(1)
+print("\n --------- top5_most_popular_movies Ready: Data sets joined ----------------\n")
+
+for movie_id, count in top5_most_popular_movies.take(5):
+    print(movie_id, " -> ", count)
+
+top5_most_popular_movies.write.format("parquet").mode("overwrite").option("header", True)\
+    .save("top5_most_popular_movies")
+
+print("\n --------- END oF PROGRAM ----------------\n")
+spark.stop()
+
+
+2. SPARK-SQL - finding teenagers
+
+from pyspark.sql import SparkSession, Row, Column
+import collections
+
+spark = SparkSession.builder.appName("SparkSQL").master("local[*]").getOrCreate()
+
+friend_rdd = spark.sparkContext.textFile("file:///Users/smukherjee/fakefriends.csv")
+
+
+def line_to_row_object(line):
+    fields = line.split(",")
+    return Row(id=int(fields[0]), name=fields[1], age=int(fields[2]), num_of_friends=int(fields[3]))
+
+# Creating DF from RDD (of Row object)
+friend_df = friend_rdd.map(lambda l: line_to_row_object(l)).toDF().cache()
+
+
+# SPARK SQL
+friend_df.createOrReplaceTempView("friend_df_table")
+teenagers = spark.sql("select * from friend_df_table where 13 <= age and age <= 20")
+
+for i in teenagers.collect():
+    print(i)
+
+# Spark DF operation
+friend_df.printSchema()
+friend_df_filter = friend_df.filter("age >= 13").filter("age <= 20")
+friend_df_target = friend_df_filter.groupBy("age").avg("num_of_friends").withColumnRenamed("avg(num_of_friends)",
+                                                                                           "avg_num_of_friends")
+friend_df_target.printSchema()
+friend_df_cleaned_target = friend_df_target.selectExpr("age", "round(avg_num_of_friends,0)")\
+    .withColumnRenamed("round(avg_num_of_friends, 0)", "avg_num_of_friends")
+
+
+print("****** DF operation ********")
+friend_df_cleaned_target.write.format("csv").mode("overwrite").option("header", True).save("friend_df_cleaned_target_csv")
+
+spark.stop()
+
+
+
+
+-----------
+AWS EMR
+-----------
+
+EMR uses undering EC2 insatnces
+
+use yarn log -application_id <app_id> to collect logs for spark script in yarn mode 
+standalone mode localhost:4040 will show spark-UI
+
+# Failure - executors failing to issue heartbeat
+Means asking too much from executors, more executors needed/ or you may need to increase memory / or use partition by to better distribute.
+
+# can use -py-files option in spark-submit to supply additional library dependencies.
+
+
+1. Monthly crime problem:
+from pyspark.sql import SparkSession,Row,functions
+
+input_file = "file:///Users/smukherjee/crime_data_sample.csv"
+output_dir = "file:///Users/smukherjee/monthly_crime/"
+
+spark = SparkSession.builder.appName("monthly_crime_count_by_type").master("local[*]") \
+    .config("spark.sql.shuffle.partitions", "10") \
+    .config("spark.sql.inMemoryColumnarStorage.batchSize", "10000") \
+    .config("spark.sql.autoBroadcastJoinThreshold", "10485760") \
+    .enableHiveSupport() \
+    .getOrCreate()
+
+input_rdd = spark.sparkContext.textFile(input_file)
+
+
+def parseline(line):
+    fields = line.split(",")
+    crime_date = fields[2]
+    crime_type = fields[5]
+
+    crime_date_part = crime_date.split(" ")[0]
+    # print(crime_date_part)
+    month = crime_date_part.split("/")[0]
+    year = crime_date_part.split("/")[2]
+    # print(year+month, crime_type)
+    return Row(crime_date=year+month, crime_type=crime_type, values=1)
+
+
+header_data = input_rdd.first()
+mapped_rdd = input_rdd.filter(lambda x: x != header_data).map(lambda l: parseline(l))
+
+input_df = mapped_rdd.toDF()
+
+grouped_df = input_df.groupBy("crime_date", "crime_type").sum("values").withColumnRenamed("sum(values)", "count")
+grouped_df.printSchema()
+
+sort_df = grouped_df.orderBy(functions.asc("crime_date"), functions.desc("count")).select("crime_date","count","crime_type")
+sort_df.printSchema()
+
+
+sort_df.rdd.saveAsTextFile(output_dir, compressionCodecClass="org.apache.hadoop.io.compress.GzipCodec")
+
+# spark-submit --master yarn --deploy-mode cluster --num-executors 3 --executor-cores 2 --executor-memory 3G monthly_crime_count.py
+# yarn logs -applicationId application_1565300265360_48836
+
+----------------------------
+
+2. Customers who have not placed any order :
+from pyspark.sql import SparkSession, Row, functions
+import os
+
+input_file_1 = "/Users/smukherjee/PycharmProjects/untitled/PySpark/orders.csv"
+input_file_2 = "/Users/smukherjee/PycharmProjects/untitled/PySpark/customers.csv"
+output_dir = "/Users/smukherjee/PycharmProjects/untitled/PySpark/customer_orders/"
+
+spark = SparkSession.builder.appName("Customer_order")\
+    .master("local[*]") \
+    .config("spark.sql.shuffle.partitions","10") \
+    .config("spark.sql.inMemoryColumnarStorage.batchsize","10000") \
+    .enableHiveSupport() \
+    .getOrCreate()
+
+
+def parseline(line):
+    fields = line.split(",")
+    order_id, order_date, order_customer_id, order_status = fields
+    return Row(order_customer_id=order_customer_id, order_id=order_id)
+
+
+with open(os.path.abspath(input_file_1),'r') as orders_file:
+    order_list = orders_file.readlines()
+order_rdd = spark.sparkContext.parallelize(order_list).map(lambda l: parseline(l))
+order_df = order_rdd.toDF()
+
+
+def parselineCustomer(line):
+    fields = line.split(",")
+    customer_id, customer_fname, customer_lname = fields[0], fields[1], fields[2]
+    return Row(customer_id=customer_id,customer_lname= customer_lname, customer_fname=customer_fname)
+
+
+with open(os.path.abspath(input_file_2)) as customer_file:
+    customer_list = customer_file.readlines()
+customer_rdd = spark.sparkContext.parallelize(customer_list).map(lambda l: parselineCustomer(l))
+customer_df = customer_rdd.toDF()
+
+
+joined_df = customer_df.join(order_df,customer_df.customer_id == order_df.order_customer_id,"left_outer")
+filter_df = joined_df.where(functions.col("order_id").isNull()).select("customer_lname", "customer_fname")
+
+orderby_df = filter_df.orderBy("customer_lname","customer_fname")
+
+orderby_rdd = orderby_df.rdd.map(lambda l: "{0}, {1}".format(l[0], l[1]))
+print(orderby_rdd.take(3))
+
+orderby_rdd.coalesce(1).saveAsTextFile(output_dir)
+print("------END OF PROGRAM -------")
+
+
+# [8314home@gw03 jan20spark]$ spark-submit --master yarn --deploy-mode client --num-executors 3 --executor-cores 2 --executor-memory 3G customers_without_order.py
+# SPARK_MAJOR_VERSION is set to 2, using Spark2
+# File read completed
+# Join and filter completed
+# ordering completed
+# ['Bolton, Mary', 'Ellison, Albert', 'Green, Carolyn']
+# ------END OF PROGRAM -------
+# [8314home@gw03 jan20spark]$
+
+---------------------------------------
+HLY_BHE_HIVE_LOAD_PAGEVIEW_CORE_CD 
+
+----------------------------------------

@@ -1,0 +1,113 @@
+Hive,Sqoop,HDFS,Hadoop
+
+SCD-2
+
+sample hive query
+
+SET mapred.job.name=Merge_FGT;
+SET tez.queue.name=edw;
+SET hive.merge.mapfiles=true;
+SET hive.merge.mapredfiles=true;
+SET hive.merge.tezfiles=true;
+SET hive.exec.compress.output=true;
+SET mapred.output.compress=true;
+SET hive.exec.dynamic.partition.mode=nonstrict;
+SET hive.exec.dynamic.partition=true;
+SET hive.exec.max.created.files=150000;
+SET hive.exec.parallel=true;
+SET hive.execution.engine=tez;
+SET hive.metastore.client.socket.timeout=300;
+SET hive.optimize.sort.dynamic.partition=true;
+SET hive.tez.container.size=8192;
+SET hive.tez.java.opts=-Xmx6553m;
+SET hive.merge.tezfiles=true;
+SET hive.merge.smallfiles.avgsize=134217728;
+SET hive.merge.size.per.task=134217728;
+SET hive.tez.auto.reducer.parallelism=true;
+SET hive.cbo.enable=true;
+
+
+INSERT OVERWRITE TABLE grp_gdoop_edw_etl_prod_db.fact_gbl_transactions_sox PARTITION (source_key, transaction_date)
+ SELECT
+ coalesce(a.order_id,b.order_id),
+ coalesce(a.order_uuid,b.order_uuid),
+ coalesce(a.parent_order_id,b.parent_order_id),
+ coalesce(a.parent_order_uuid,b.parent_order_uuid),
+ coalesce(a.transaction_division,b.transaction_division),
+ coalesce(a.action,b.action),
+ coalesce(a.country_id,b.country_id),
+ coalesce(a.order_date_ts,b.order_date_ts),
+ coalesce(a.order_date,b.order_date),
+ coalesce(a.transaction_date_ts,b.transaction_date_ts),
+ coalesce(a.user_id,b.user_id),
+ coalesce(a.user_uuid,b.user_uuid),
+ coalesce(a.unified_user_id,b.unified_user_id),
+ coalesce(a.bcookie,b.bcookie ),
+ coalesce(a.merch_product_uuid,b.merch_product_uuid),
+ coalesce(a.inv_product_uuid,b.inv_product_uuid),
+ coalesce(a.inv_type_id,b.inv_type_id),
+ coalesce(a.user_brand_affiliation,b.user_brand_affiliation),
+ coalesce(a.deal_option_id,b.deal_option_id),
+ coalesce(a.deal_uuid,b.deal_uuid),
+ coalesce(a.deal_id,b.deal_id),
+ coalesce(a.offer_key,b.offer_key),
+ coalesce(a.merchant_uuid,b.merchant_uuid),
+ coalesce(a.transaction_platform,b.transaction_platform),
+ coalesce(a.transaction_device,b.transaction_device),
+ coalesce(a.currency_code,b.currency_code),
+ coalesce(a.is_refund_by_cs,b.is_refund_by_cs),
+ coalesce(a.refund_reason,b.refund_reason),
+ coalesce(a.discount_reason_key,b.discount_reason_key),
+ coalesce(a.unit_buy_price,b.unit_buy_price),
+ coalesce(a.unit_sell_price,b.unit_sell_price),
+ coalesce(a.unit_sell_price_is,b.unit_sell_price_is),
+ coalesce(a.transaction_qty,b.transaction_qty),
+ coalesce(a.txn_amount_loc,b.txn_amount_loc),
+ coalesce(a.is_zero_amount,b.is_zero_amount),
+ coalesce(a.refund_amount_loc,b.refund_amount_loc),
+ coalesce(a.shipping_amount_loc,b.shipping_amount_loc),
+ coalesce(a.tax_amount_loc,b.tax_amount_loc),
+ coalesce(a.discount_amount_loc,b.discount_amount_loc),
+ coalesce(a.booking_fee_loc,b.booking_fee_loc),
+ coalesce(a.gross_bookings_loc,b.gross_bookings_loc),
+ coalesce(a.margin_percent,b.margin_percent),
+ coalesce(a.gross_revenue_loc,b.gross_revenue_loc),
+ coalesce(a.is_canceled,b.is_canceled),
+ coalesce(a.auth_nob_loc,b.auth_nob_loc),
+ coalesce(a.capture_nob_loc,b.capture_nob_loc),
+ coalesce(a.credit_card_fee_loc,b.credit_card_fee_loc),
+ coalesce(a.est_3pl_shipping_cost_loc,b.est_3pl_shipping_cost_loc),
+ coalesce(a.refund_allowance_loc,b.refund_allowance_loc),
+ coalesce(a.freight_allowance_loc,b.freight_allowance_loc),
+ coalesce(a.auth_nor_loc,b.auth_nor_loc),
+ coalesce(a.capture_nor_loc,b.capture_nor_loc),
+ coalesce(a.is_activation,b.is_activation),
+ coalesce(a.is_reactivation,b.is_reactivation),
+ coalesce(b.dwh_created_ts,a.dwh_created_ts),
+ coalesce(a.dwh_updated_ts,b.dwh_updated_ts),
+ coalesce(a.platform_key,b.platform_key),
+ coalesce(a.source_key,b.source_key),
+ coalesce(a.transaction_date,b.transaction_date)
+ FROM grp_gdoop_edw_etl_prod_db.fact_gbl_transactions_sox_inc  a
+ FULL OUTER JOIN (select * from grp_gdoop_edw_etl_prod_db.fact_gbl_transactions_sox where transaction_date in( '2019-07-17','2019-07-18','2019-07-19','2019-07-20','2019-07-21') and source_key in('NA','EMEA') ) b
+  ON a.order_id = b.order_id
+ AND a.transaction_date_ts = b.transaction_date_ts
+ AND a.parent_order_id = b.parent_order_id
+ AND a.order_date = b.order_date
+ AND a.country_id = b.country_id
+ AND a.source_key = b.source_key
+ AND a.action = b.action;
+
+
+SET tez.queue.name=edw_traffic_core;
+SET hive.auto.convert.join=false;
+SET hive.exec.compress.output=true;
+set hive.tez.container.size=8192;
+set hive.tez.java.opts=-Xmx6000M;
+set hive.optimize.sort.dynamic.partition=true;
+SET hive.exec.dynamic.partition.mode=nonstrict;
+SET hive.exec.dynamic.partition=true;
+SElECT count(*) AS hive_count
+from traffic.user_bcookie_mapping
+where event_date ='2019-08-29'
+and to_date(edw_created_ts) = '2019-08-29';

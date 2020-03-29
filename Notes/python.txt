@@ -1,0 +1,1489 @@
+python
+
+name=input("Please enter name")
+
+print() - no distinction between '..' & ".." , whatever we start with the lone should end with it.Placing a \ infront of " or ' in the middle willescape it.
+
+splitstring = """ this string has 
+many lines, no need for a backslash """
+
+# both program & variables get stored somewhere in memory.When we use a variable - computer allocates a computer memory & stores value there,computer know reference to the place
+
+## python variable names are case sensitive, implicit casting of variable to other type is not supported.
+
+Data types:
+Numeric
+Sequence 
+
+
+print(a / b) - returns result in float
+print(a // b) - returns result in integer
+print(a % b) - return the remainder
+
+operator precedence:
+() , /, * with highest precedence.
+
+String - Immutable - Sequence type - 0 based index, -ve index starts counting from end
+Textual data in Python is handled with str objects, or strings. Strings are immutable sequences of Unicode code points.
+
+Editing string at positional index is not possible.We can only reassign the value
+
+
+parrot="Norwegian Blue"
+parrot[0:6] -> will give a range from string Norweg
+parrot[:6] -> automatically starts at 0 index
+parrot[6:] -> starting from 6th position ,go till end
+parrot[-4:2] -> WILL NOT PRINT ANYTHING
+parrot[-4:-2] -> start from 4th(back side start with -1) position from last & for 2 place
+parrot[0:6:2] -> from 0 till 6 position, every 2nd letter
+
+number = "9,123,234,345,456"
+print(number[1::4]) -> extract only commas starting from 1(2nd letter),every 4th char
+
+numbers="1, 2, 3, 4, 5, 6, 7, 8"
+print(numbers[0::3]) -> extract only numbers
+
+substring check => print("day" in "friday")
+
+# Replacement field - python3 new feature
+
+print("""January: {2}
+February: {0}
+March: {2}
+April: {1}
+May: {2}
+June: {1}
+July: {2}
+August: {2}
+September: {1}
+October: {2}
+November: {1}
+December: {2}""".format(28, 30, 31))
+
+
+age = 24
+print("My age is %d %s, %d %s" % (age, "years", 6, "months"))
+
+for i in range(1, 12):
+    print("No. %2d squared is %4d and cubed is %4d" %(i, i ** 2, i ** 3))
+
+print("Pi is approximately %12f" % (22 / 7))
+
+for i in range(1, 12):
+    print("No. {0:2} squared is {1:4} and cubed is {2:4}".format(i, i ** 2, i ** 3))
+
+for i in range(1, 12): #Related to left/right associativity 
+    print("No. {0:2} squared is {1:<4} and cubed is {2:<4}".format(i, i ** 2, i ** 3))
+
+print("Pi is approximately {0:12.50f}".format(22 / 7))
+print("Pi is approximately {0:52.50f}".format(22 / 7))
+
+for i in range(1, 12):
+    print("No. {} squared is {} and cubed is {:4}".format(i, i ** 2, i ** 3))
+
+# ===================================================
+
+in a condition any non zero or non-Empty value evaluates to true
+
+
+
+name=input("Please enter name: ")
+age=int(input("What's your age {0} ?\n".format(name)))
+
+if (18 <= age < 31 ):
+    print("Welcome {0} to 18-30 holiday".format(name))
+else:
+    print("Sorry,you can't enter")   
+
+# =====================================================   
+Range fn does not include last value - range(1,20) will include values from 1 to 19  
+
+number = "9,123,234,345,456"
+cleaned_number=''
+for i in range(0,len(number)):
+    if number[i] in "123456789":
+       cleaned_number=cleaned_number + number[i]
+       #print(number[i],end='')
+
+new_number=int(cleaned_number)
+print("The new number is : {}".format(new_number))    
+
+# ---
+
+python for loop can operate on "sequence" type.
+
+quote = """
+Alright, but apart from the Sanitation, the Medicine, Education, Wine,
+Public Order, Irrigation, Roads, the Fresh-Water System,
+and Public Health, what have the Romans ever done for us?
+"""
+only_caps=''
+
+for i in quote:
+    if i in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+       print(i,end='')
+
+for i in range(0,100,7):
+    print(i)
+
+# ---- Multiplication table:
+for i in range(1,21):
+    for j in range(1,21):
+        print("{0:<4}".format(i*j),end='')
+    print("\n")      
+# =====================================================
+
+# for loop has an else section available which gets executed if loop till end value is allowed to run without any "break" in between.
+
+food=["milk", "bread", "beans", "tomato"]
+nasty_food=''
+for i in food:
+    if i == "spam":
+       nasty_food = 'spam' 
+       break
+else:
+    print("I will have 1 plate then")
+
+if nasty_food == 'spam':
+   print("cant's I have anything without spam") 
+# =====================================================
+
+for i in range(0, 100, 7):
+    if (i>0) and (i%11 == 0):
+        print(i)
+        break
+    else:
+        print(i)
+else:
+    print("no such no found")
+
+for i in range(0,20):
+    if (i%3 == 0) or (i%5 == 0):
+        continue
+    else:   
+        print(i)  
+
+for i in range(0,20):
+    if (i%3 != 0) or (i%5 != 0)):  
+        print(i) 
+
+# -------------
+
+Augmented assignment:
+
+# += -= *= /= %= **= <<= >>= &= ^= |=
+
+number = 5
+multiplier = 8
+answer = 0
+
+i=1
+for i in range(multiplier):
+    answer+=number
+
+print("Answer is : {}".format(answer))
+
+# -----IP address - no of segment & length of segment-------------
+123.78.0.1
+3 2 1 1
+
+ip=input("enter ip address")
+if ip[-1] !='.'
+    ip+='.'
+
+
+t=0
+s=1 #no of segment
+
+
+for c in ip:
+    if c=='.':
+        print("segment no {0} has {1} chars ".format(s,t))
+        s+=1
+        t=0
+    else:
+        t+=1
+
+for x in range(30):
+    if x % 3 == 0 or x % 5 == 0:
+        continue
+    print(x)
+
+for x in range(30):
+    if x % 3 != 0 and x % 5 != 0:
+        print(x)
+
+
+
+ # -------------
+# Guessing number game:
+
+import random
+
+max_value=20
+selected_number = random.randint(1,max_value)
+print("Please enter number within 1 to {}".format(max_value))
+
+t=0
+while t<3:
+    user_input_number=int(input("enter number:")) 
+    if user_input_number==selected_number:
+        print("You guessed correctly.")
+        break
+    elif user_input_number==0:
+        print("Quiting program")
+        break 
+    else:
+        t+=1 
+        if (user_input_number < selected_number) and (t<3):
+            print("guess higher")
+        if (user_input_number < selected_number) and (t<3):
+            print("guess lower") 
+                       
+else:
+    print("GAME OVER: The number was : {}".format(selected_number))
+
+# -----------
+Sequence Data types - List Range Tuple :
+-----------------------------------------
+
+sort() method works on existing variable ,does not create a new object.
+sorted() method returns objects in sorted order.
+
+List_1=[] #empty list same as List_2=list()
+
+##New concept: 
+even=[2,4,6,8]
+another_even=even # assignment like this does not create a new variable in python,it just references to same object in memory
+a call like another_evn.sorted(reverse=True) will reverse the original list in descending order.
+another_even=list(even) will create a new object in memory,then call like another_evn.sorted(reverse=True) will not 
+alter original content of even list.
+
+"=="  tests for element equality in python - whether two lists have same elements
+"is" checks for object equality - if two objects are same/same memory loc being referenced.
+with,
+another_even=list(even)
+
+another_list == even -> will be true
+another_list is even -> will be false
+
+
+menu=list()
+menu.append(['egg','spam','bread'])
+menu.append(['egg','orange'])
+menu.append(['egg','apple','spam'])
+
+for meal in menu:
+    if not "spam" in meal:
+        print(meal)
+        for i in meal:
+            print(i)
+
+
+Iterators & Iterable objects:
+------------------------------
+Iterators is an object that represent a stream of data.  
+
+String,List
+
+Iterators are created like below:
+my_iter = iter(string)
+next(my_iter) - returns the next item from iterator ,untill "StopIteration" error is received.
+
+menu2=['egg','spam','bread']
+iter_menu2=iter(menu2)
+
+for i in range(menu2.__len__()):
+    print(next(iter_menu2))
+
+# Range
+--------
+in Python3 Range is an object.
+
+my_list=list(range(0,10)) -> creating a list from range
+even=list(range(0,10,2))
+odd=list(range(1,10,2))
+
+print(odd[985]) -> will return 986th value from range.
+
+Also we can check if a no is within a range:
+
+rangle_val =range(7,10000,7)
+inp =int(input("please enter number"))
+
+if inp in rangle_val:
+    print("{} is divisible by 7".format(inp))
+else:
+    print("{} is NOT divisible by 7".format(inp)) 
+
+### Sliced range:
+We can slice a range part of another bigger range
+
+decimals=range(0,1000)
+
+my_range=decimals[3,50,3] --> we are taking values from 3 to 50 using decimals range
+
+
+SLI,SLO
+
+r=range(0,100,2)
+r[::2] sliced out from last value and decrease it one by one
+
+processing range in reverse order r[::-1] , applicable to string as well
+>>> pr=range(0,55,3)
+>>> pr1=pr[::4]
+>>> print(pr1)
+range(0, 57, 12)
+>>> for i in pr1:
+...     print(i)
+...
+0
+12
+24
+36
+48
+
+how is 57 :  max value within range with old base + old base value
+eg: pr=range(0,55,3) -> 54 is max val + 3 base value
+
+with -1 indicator - smallest value(start value) with old base - mod(old base value)
+
+Tuples:
+a heterogeneous sequence of elements - immutable
+Tuples are immutable, and usually contain a heterogeneous sequence of elements that are accessed via unpacking (see later in this section) or indexing (or even by attribute in the case of namedtuples). 
+Lists are mutable, and their elements are usually homogeneous and are accessed by iterating over the list.
+
+we can slice out tuple using index:
+t=('a','b','c')
+t[1] will be=b
+t2=(t[0],'new value',t[2])
+
+We can extract multiple parts of a tuple in single line of variables.
+
+
+
+imelda = "More Mayham","Imelda May",2011,(
+       (1,"Putting the rug"), (2,"Psycho"), (3,"Mayhem"), (4,"Kentish Town Waltz"))
+
+title,singer,year,tracks=imelda
+
+print(title)
+print(singer)
+print(year)
+
+for song in tracks:
+    tr_no,song=song
+    print("\ttrack no: {0} song: {1}".format(tr_no,song))
+
+### Teaser: A tuple is immutable, it's contents can't be changed but if a tuple has one element as List , List is mutatble and values can be added to that list   
+
+
+imelda = "More Mayham","Imelda May",2011,(
+       [(1,"Putting the rug"), (2,"Psycho"), (3,"Mayhem"), (4,"Kentish Town Waltz")])
+
+# [] -> 4th element is a list now instead of tuple
+# 1 tuple containing 1 list is same as the list
+print(imelda)
+
+imelda[3][0].append((5,"All For You"))
+
+print(imelda)
+title,singer,year,tracks=imelda
+
+tracks.append((6,"Eternity"))
+
+print(title)
+print(singer)
+print(year)
+
+for song in tracks:
+    tr_no,song=song
+    print("\ttrack no: {0} song: {1}".format(tr_no,song)) 
+
+----------------------------
+# Binary Number System:
+---------------------------- 
+
+
+-----------------
+#   Dict & Set
+-----------------
+Dict & Set both are unordered collection, they also gurantees that there will not be any duplicates.
+No access by index.
+
+Performing list(d) on a dictionary returns a list of all the keys used in the dictionary, 
+in insertion order (if you want it sorted, just use sorted(d) instead)
+
+fruit={"apple":"A for apple","orange":"O for orange" ,"lemon":"l for lemon"}
+print(fruit["apple"])
+fruit["apple"] is same as fruit.get("apple")
+fruit.get("apple","We doe not have the fruit") -> if item does not exist then returns None type.
+
+fruit["bananna"]="B for bananna" --> adds/overwrites item to dict
+
+del fruit["bananna"] removes item
+del fruit -> removes entire dict
+fruit.clear() -> empties the dict but keeps the dict
+
+
+fruit.keys() /fruit.values() -> returns the keys & values in form of a view object.
+fruit.items() -> returns the k-v pair in a list of tuples like view objects
+
+# dict -> tuple
+----------------
+using below we can convert them to tuple.
+f_tuple=tuple(fruit.items()) 
+
+# tuple -> dict
+----------------
+dict(f_tuple)
+
+# join & split()
+-----------------
+
+# .join() method for list/String - a good method add seperator between string /list
+eg.
+mylist=["a","b","c","d"]
+",".join(mylist) -> a,b,c,d
+        
+# any sequencse.split(',')
+
+# update & copy method
+update - combine two dicts together - alters original dict
+copy -creates anew copy
+>>> a={1:'a',2:'b',3:'cc'}
+>>> b={3:'c',4:'d'}
+>>> a.update(b)
+>>> print(a)
+{1: 'a', 2: 'b', 3: 'c', 4: 'd'}
+>>> c=a.copy()
+>>> print(c)
+{1: 'a', 2: 'b', 3: 'c', 4: 'd'}
+>>>
+
+Direction Game:
+------------------------------
+# Challenge time!
+# We have mentioned that the data for the Adventure game could be organised in many
+# different ways.  We've created another way for you.
+# Your mission, if you choose to accept it, is to
+# change the code to make it work.
+# Below is the the complete program from the last video, but with the
+# locations dictionary modified so that everything is in a single dictionary.
+# N.B. Yes the code has some errors, thats what you need to fix!
+
+locations = {0: {"desc": "You are sitting in front of a computer learning Python",
+                 "exits": {},
+                 "namedExits": {}},
+             1: {"desc": "You are standing at the end of a road before a small brick building",
+                 "exits": {"W": 2, "E": 3, "N": 5, "S": 4, "Q": 0},
+                 "namedExits": {"2": 2, "3": 3, "5": 5, "4": 4}},
+             2: {"desc": "You are at the top of a hill",
+                 "exits": {"N": 5, "Q": 0},
+                 "namedExits": {"5": 5}},
+             3: {"desc": "You are inside a building, a well house for a small stream",
+                 "exits": {"W": 1, "Q": 0},
+                 "namedExits": {"1": 1}},
+             4: {"desc": "You are in a valley beside a stream",
+                 "exits": {"N": 1, "W": 2, "Q": 0},
+                 "namedExits": {"1": 1, "2": 2}},
+             5: {"desc": "You are in the forest",
+                 "exits": {"W": 2, "S": 1, "Q": 0},
+                 "namedExits": {"2": 2, "1": 1}}
+             }
+
+vocabulary = {"QUIT": "Q",
+              "NORTH": "N",
+              "SOUTH": "S",
+              "EAST": "E",
+              "WEST": "W",
+              "ROAD": "1",
+              "HILL": "2",
+              "BUILDING": "3",
+              "VALLEY": "4",
+              "FOREST": "5"}
+
+loc = 1
+while True:
+
+    availableExits = ", ".join(locations[loc]["exits"].keys())
+
+    print(locations[loc]["desc"])
+
+    if loc == 0:
+        break
+    else:
+#        allExits = exits[loc].copy()
+         allExits =locations[loc]["exits"].copy()
+         allExits.update(locations[loc]["namedExits"])
+
+    direction = input("Available exits are " + availableExits).upper()
+    print()
+
+    # Parse the user input, using our vocabulary dictionary if necessary
+    if len(direction) > 1:  # more than 1 letter, so check vocab
+        words = direction.split()
+        for word in words:
+            if word in vocabulary:   # does it contain a word we know?
+                direction = vocabulary[word]
+                break
+
+    if direction in allExits:
+        loc = allExits[direction]
+    else:
+        print("You cannot go in that direction")
+
+# Sets
+----------
+unordered-no index based access -immutable -can be defined with {}
+most cases we use set() -constructor method
+add(),union(),intersect(),difference()
+symmetric_difference() - items from both set which are not common in both set,
+
+
+difference_update,discard vs remove,issubset(),isuperset()
+discard vs remove - removal of 2nd time throws error,if item is not there
+
+frozenset - immutable set - can be used as keys 
+
+
+testString="This is MAX"
+testSet=set(testString)
+vowelSet={'a','e','i','o','u','A','E','I','O','U'}
+conjunctionSet={' ','.',';'}
+
+finalSet=(testSet.difference(vowelSet)).difference(conjunctionSet)
+print("All the consonants in text are: {}".format(finalSet))
+print("All the consonants in text are: {}".format(finalSet))    
+
+--------------------------
+Input & Output in Python
+--------------------------
+
+with statement automatically takes care of file closing & cleanup if some inbetween op fails while the file was open.
+
+read() -returns entire content as a single string
+readLines() -returns entire content as a list of strings.
+readline() - read 1 single line & returns as a string-can be used in while loop for iteration
+
+#
+# with open("sample.txt", 'r') as jabber:
+#     line = jabber.readline()
+#     while line:
+#         print(line, end='')
+#         line = jabber.readline()
+
+# with open("sample.txt", 'r') as jabber:
+#     lines = jabber.readlines()
+# print(lines)
+#
+# for line in lines:
+#     print(line, end='')
+#
+
+with open("sample.txt", 'r') as jabber:
+    lines = jabber.readlines()
+print(lines)
+
+for line in lines[::-1]:
+    print(line, end='')
+
+with open("sample.txt", 'r') as jabber:
+    lines = jabber.read()
+
+for line in lines[::-1]:
+    print(line, end='')
+
+write to file:
+with statement in 'w' mode , mention print(variable_name,file=filname.txt)
+for writing to file.
+strip() function on a strip removes chars from beginning or end of string.
+program writes --> buffer --> file for large read,in the mean time program will work on other tasks.fo large files it's good to flush immediately, using flush=True.not recommended now a days.
+
+eval() function to evaluate while reading from a file, will automatiicaly take care of target data type
+
+
+with open("/Users/smukherjee/sample.txt",'a') as sample_txt_file:
+    for i in range(2,13):
+        for j in range(1,13):
+            print("{0:2} times {1:2} is {2:3}".format(j,i,i*j),file=sample_txt_file)
+        print("-"*40,file=sample_txt_file)    
+    print("-- END --",file=sample_txt_file)        
+
+case - Binary files:
+Integers & Strings can NOT be written to binary file directly,must be converted to Bytes first.
+
+Pickle & Shelve to work with Binary Data: 
+-------------------------------------------
+import pickle
+import shelve
+
+
+Pickle:
+The pickle module implements binary protocols for serializing and de-serializing a Python object structure. “Pickling” is the process whereby a Python object hierarchy is converted into a byte stream, and “unpickling” is the inverse operation, whereby a byte stream (from a binary file or bytes-like object) is converted back into an object hierarchy. Pickling (and unpickling) is alternatively known as “serialization”, “marshalling,” 1 or “flattening”; however, to avoid confusion, the terms used here are “pickling” and “unpickling”.
+It is used for storing & restoring.
+# Objects must be read in same order they way they were pickled.
+
+import pickle
+
+even=list(range(0,10,2))
+odd=list(range(1,10,2))
+
+with open("sample.pickle",'wb') as sample_pickle_file:
+    pickle.dump(even,sample_pickle_file)
+    pickle.dump(odd,sample_pickle_file)
+    print("write completed")
+
+with open("sample.pickle",'rb') as sample_file:
+    even_list=pickle.load(sample_file)
+    odd_list=pickle.load(sample_file)
+    
+print("even list content : {}".format(even_list))
+print("odd list content : {}".format(odd_list))
+
+Shelve:
+Pickled objects requires all to be loaded back to memory, but may not support always - Shelves works like a persistent dict stored in file
+in form of shilve_name.db.Key-Value pair storage. But Keys are stored as Strings.when changed ,both correct & 
+incorrect key will still be stored in db file.
+
+dict vs shelves - dict key can be any immutable object but shelves key must be a string
+
+import shelve
+
+#with shelve.open('ShelfTest') as fruit:
+ 
+fruit = shelve.open('ShelfTest')
+fruit['orange'] = "a sweet, orange, citrus fruit"
+fruit['apple'] = "good for making cider"
+fruit['lemon'] = "a sour, yellow citrus fruit"
+fruit['grape'] = "a small, sweet fruit growing in bunches"
+fruit['lime'] = "a sour, green citrus fruit"
+
+print(fruit["lemon"])
+print(fruit["grape"])
+
+for k in fruit.keys():
+    print("Key: {0} and value : {1}".format(k,fruit[k]))
+ 
+for v in fruit.values():
+    print("Values: {}".format(v))
+
+for i in fruit.items():
+    print("item: {}".format(i))        
+    t_key,t_val=i
+    print("t_key: {}".format(t_key))
+    print("t_val: {}".format(t_val))
+
+
+l_keys_list=list(fruit.keys())
+l_keys_list.sort()
+for i in l_keys_list:
+    print("orders list: {}".format(i))
+
+fruit.close()
+
+Updating with Shelves:
+appending  to a list is actually copying the list into memory and adding an item to the list in memory.But there is now way write back
+that data to the shelve.But when accessd it is read from the original shelve data with unchanged value.Here we need to create a temp_list with the exiting values .Add a value to the temp_list.
+Alternative 
+is opening shelve with writeback flag=true
+
+with shelve.open("recipes",writeback=True):
+     recipes["soup"].append("croutons")
+
+generally with writeback option ,entries will be written to disk when shelve finally closed.to avoid that we can use sync in between to write the data immediately and clear memory cache.
+recipes.sync()
+
+# ------------------------------------
+
+# Modify the program from the Second Dictionary challenge of lecture 56
+# to use shelves instead of dictionaries.
+#
+# Do this by creating two programs. cave_initialise.py should create the two
+# shelves (locations and vocabulary) with the appropriate keys and values.
+#
+# cave_game.py will then use the two shelves instead of dictionaries.
+# Apart from opening and closing the shelves, cave_game will need only
+# two changes to the actual code - remember that shelf keys MUST be strings!
+#
+# Just to be clear, cave_game.py will contain the code from line 45, everything
+# before that (modified to use shelves) will be in cave_initialise.py.
+
+
+import shelve
+
+locations=shelve.open("locations",writeback=True)
+vocabulary=shelve.open("vocabulary",writeback=True)
+
+locations["desc"] = {0: "You are sitting in front of a computer learning Python",
+                     1:"You are standing at the end of a road before a small brick building",
+                     2:"You are at the top of a hill",
+                     3:"You are inside a building, a well house for a small stream",
+                     4:"You are in a valley beside a stream",
+                     5:"You are in the forest"                     
+                     }
+
+
+locations["exits"]= {0:{},
+                     1:{"W": 2, "E": 3, "N": 5, "S": 4, "Q": 0},
+                     2:{"N": 5, "Q": 0},
+                     3:{"W": 1, "Q": 0},
+                     4:{"N": 1, "W": 2, "Q": 0},
+                     5:{"W": 2, "S": 1, "Q": 0}
+                     }
+locations["namedExits"]={0:{},
+                         1:{"2": 2, "3": 3, "5": 5, "4": 4},
+                         2:{"5": 5},
+                         3:{"1": 1},
+                         4:{"1": 1, "2": 2},
+                         5:{"2": 2, "1": 1}
+                         }
+
+vocabulary["QUIT"]="Q"
+vocabulary["NORTH"]="N"
+vocabulary["SOUTH"]="S"
+vocabulary["EAST"]="E"
+vocabulary["WEST"]="W"
+vocabulary["ROAD"]="1"
+vocabulary["HILL"]="2"
+vocabulary["BUILDING"]="3"
+vocabulary["VALLEY"]="4"
+vocabulary["FOREST"]="5"
+
+
+locations.close()
+vocabulary.close()
+
+---------------
+
+
+import shelve
+
+locations=shelve.open("locations")
+vocabulary=shelve.open("vocabulary")
+
+
+loc = 1
+while True:
+    #availableExits = ", ".join(locations[loc]["exits"].keys())
+    availableExits = ", ".join(locations["exits"][loc].keys())
+
+    print(locations["desc"][loc])
+
+    if loc == 0:
+        break
+    else:
+        allExits = locations["exits"][loc].copy()
+        allExits.update(locations["namedExits"][loc])
+
+    direction = input("Available exits are " + availableExits).upper()
+    print()
+
+    # Parse the user input, using our vocabulary dictionary if necessary
+    if len(direction) > 1:  # more than 1 letter, so check vocab
+        words = direction.split()
+        for word in words:
+            if word in vocabulary:   # does it contain a word we know?
+                direction = vocabulary[word]
+                break
+
+    if direction in allExits:
+        loc = allExits[direction]
+    else:
+        print("You cannot go in that direction")
+
+locations.close()
+vocabulary.close()
+
+------------------
+
+Modules & Functions:
+
+
+import time
+perf_counter - measurments
+monotonic - not affected by daylight save changes
+procss_time -cpu time
+
+import time
+
+print("local time value:{}".format(time.localtime()))
+start_time =time.time()
+
+
+print("------------challenge---------------")
+print("time clock info: {}".format(time.get_clock_info('clock')))
+print("time time.time() info: {}".format(time.get_clock_info('time')))
+print("time time.monotonic info: {}".format(time.get_clock_info('monotonic')))
+print("time perf_counter info: {}".format(time.get_clock_info('perf_counter')))
+
+
+end_time =time.time()
+print("Started at " + time.strftime("%X", time.localtime(start_time)))
+print("Ended at " + time.strftime("%X", time.localtime(end_time)))
+print("Total run time".format(end_time - start_time))
+
+
+dealing with Date rather than time- better to use: datetime module
+
+
+
+
+tkinter - GUI based module:
+pack
+grid
+
+
+Functions:
+------------------
+
+all functions should return something ,else it will return None.
+
+varargs,named parameters,default values for parameters.
+
+
+Class: template for creating objects. All objects created using the same class will have the same characteristics.
+Object: an instance of a class.
+Instantiate: create an instance of a class.
+Method: a function defined in a class.
+Instance Attribute: a variable bound to an instance of a class.
+
+class attribute - attribute shared by all instances
+
+class attribute can be overwritten in instance level,
+also python allows additional attribute at instance level.
+
+
+# Intellij detected that function is not using self parameter, so it can be implemented as a static method (ie whose return value does not depend on
+input parameters being passed.)
+
+
+
+
+Static method is shared by all instances of a class
+1. remove self parameter
+2. put annotation @staticmethod at the top of method name
+3. static method should be  called by using class name,not by instance name or self inside class.
+
+
+print("Models: {0.make} = {0.price}, {1.make} = {1.price}".format(kenwood, hamilton))
+
+print(Kettle.__dict__)
+print(kenwood.__dict__)
+print(hamilton.__dict__)
+
+Name mangling:(done for simulating private access to variable)
+
+if we start any variablename with two (_) inside class
+eg. __balance ==> python automatically converts it to _Classname__variable.
+this way attribute is hidden from outside.
+
+
+Class level circular reference: Garbage collection:
+
+
+
+
+-----------
+
+Getter & Setter:
+
+1. method which is used to get data attribute value
+
+
+how it is used?
+
+property() -> getter/setter method --> hidden data attribute
+
+# When we try to print an object it tries to look for a method called __str__ which should return a string format value
+
+
+@property -> def getter
+@score.setter -> for setter
+
+practice - vd -137
+
+python is dynamically typed language.not like java which is static typed language.in java duirng compile data type of 
+every variable is checked.But in python it is checked only when it is being used.
+OOP program:
+
+
+Polymorphism implementation using Composition:
+Polymorphism implementation using aggregation:
+
+
+Exception:
+differnce between else & finally. (else part if while,try block behave differently)
+else part is executed if try block executes as expected without any exception thrown, finally part is executed always
+
+# Explicit data type reference: (a: str) -> int (vd-177 Learn Python Programming Masterclass)
+isinstance() function
+callable() function - whether on an object a function can be called without throwing exception: used for adding problematics file to a list & pulish at the end
+get_attr() functions are used to see if an object's type.
+
+# How to store a complete object in database column using python:
+use pickle to store, store picked value
+
+
+
+# rollback trasacttions:
+vd -188
+
+# *args & **kwargs
+----------------
+multi values being passed to function will be collected as a tuple, which can be used inside function.
+kwargs - key with arguments - values are collected as a dict.
+args are used to unpack elements in tuple, kwargs are used to unpack values in a dict
+
+
+#Python dates: https://janakiev.com/blog/time-and-timezones-in-python/
+
+# how to store UTC time & local time?
+vd -187
+
+How to localise UTC time?
+transaction_local_time = datetime.datetime.now()
+datetime_tz_name = pytz.timezone('Asia/Calcutta').localize(transaction_time)
+
+How to get current time zone info?
+>>> import datetime
+>>> tz_string = datetime.datetime.now(datetime.timezone.utc).astimezone().tzname()
+>>> print(tz_string)
+IST
+
+
+# section-12 : Generators, lambda
+----------------------------------
+Generators are a simple and powerful tool for creating iterators. 
+They are written like regular functions but use the yield statement whenever they want to return data.
+ Each time next() is called on it, the generator resumes where it left off (it remembers all the data values and which statement was last executed)
+
+Generators are implemented using keyword - yield - they give one o/p & goes to a pause step, does not exit or gets 
+finished.
+
+Fibonacci no/ pi calculation
+
+
+#os.walk is a generator, it searches files from a root dir mentioned to downstream/upstream recursively
+# List all emp3 files under current dir structure
+import os
+
+root = "music"
+
+for path, subdir, files in os.walk(root,topdown=True):
+    if files:
+        first_split = os.path.split(path)
+        print("{0}".format(first_split[0]))
+        for f in files:
+            cleaned_name = f[:-5].split(" - ")[1]
+            print(cleaned_name)
+
+# Generators using generators:
+# find all the music files by a particular artist
+
+import os
+import fnmatch
+
+
+def find_album(root, artist_name):
+    for path,directories,files in os.walk(root, topdown=True):
+        for artist in fnmatch.filter(directories, artist_name): # fnmatch is for searching based on filename pattern
+            subdir = os.path.join(path,artist)
+            for artist_path, albums, _ in os.walk(subdir):
+                for album in albums:
+                    yield os.path.join(artist_path, album), album # generating tuple of path & album name
+
+
+def find_songs(albums):
+    for album in albums:
+        for song in os.listdir(album[0]): # list dir as we already know about dir, do not need to walk
+            yield song[:-5].split(" - ")[1]
+
+
+album_list = find_album("music", "Bon Jovi")
+
+song_list = find_songs(album_list)
+
+for s in song_list:
+    print(s)
+
+###  fnmatch.filter can take wild card  
+
+### Genrator Expression: for artist in (d for d in directories if fnmatch.fnmatch(d.upper(), caps_name))  
+
+
+
+# comprehensions for list,set,dict:
+--------------------------------------
+
+testrange = range(1,20)
+
+for x in testrange:
+    strval = ""
+    if x % 3 == 0:
+        strval += "fizz"
+    if x % 5 == 0:
+        strval += "buzz"
+    if strval == "":
+        strval += str(x)
+    print(strval)
+
+print("_"*40 ,"List comprehension")
+
+a = ["fizzbuzz" if x % 15 == 0 else "buzz" if x % 5 == 0 else "fizz" if x % 3 == 0 else str(x) for x in testrange]
+for i in a:
+    print(i)
+
+# Named Tuple:
+---------------------
+special tuples with names & property names assignment facilty
+https://docs.python.org/3/library/collections.html#collections.namedtuple
+
+from collections import namedtuple
+
+Point = namedtuple('Point', ['x', 'y'])
+Color = namedtuple('Color', ('red', 'green', 'blue'))
+
+p = Point(10,20)
+c = Color(10,20,30)
+
+print(p, c)
+print(p._fields)
+print(c._fields)
+
+Pixel = namedtuple('Pixel', Point._fields + Color._fields)
+
+
+pixel = Pixel(p.x,p.y,c.red,c.blue,c.green)
+print(pixel)
+
+
+
+# Import system:
+--------------------------------------
+https://docs.python.org/3/reference/import.html
+
+by default import executes the imported file, while importing , to avoid that execution we include a section
+
+if "__name__" == "__main__"
+
+__name__ is a builtin attribute which stores the name of module being executed, value __main__ means part from current program
+being executed, If we have a program which is importing many packages/modules, better to include __main__ section for that program part to 
+be executed as main ,and code sections from imported modules will be executed only when they are asked.
+
+
+# Global variable & nonlocal variable
+----------------------------------------
+
+# When we refer/use a variable inside a function & try to assign value, Python creates a local copy of the variable
+and use it. to use the global copy we need to mark the variable glocal inside functions scope.
+
+# New scopes are created in python only by class, function & module.
+
+# LEGB - Local -> Enclosing-> Global-> Bundle - variable search precedence - 
+
+# Nonlocal - marking a variable nonlocal means the variable has to be defined in enclosing scope.
+
+Exercise for reference: 
+
+The following script throws a NameError  in the last line saying that c  is not defined. 
+Please fix the function so that there is no error and the last line is able to print out the value of c  (i.e. 1 ).
+
+    def foo(): 
+        c = 1 
+        return c 
+    foo() 
+    print(c)
+
+Answer: 
+
+    def foo():
+        global c
+        c = 1 
+        return c 
+    foo() 
+    print(c)
+
+Explanation:
+
+Adding global c  fixes the code. That line makes available name c  in the global namespace. 
+Therefore,  print is able to access variable c .
+
+Nonlocal variable example: 
+-----------------------------
+
+
+
+
+
+
+## Find mp3 file from a root dir:
+import os
+import fnmatch
+import id3reader_p3 as id3reader
+
+
+def find_mp3file(start_dir, extension):
+    for path, subdir, files in os.walk(start_dir):
+        for file in fnmatch.filter(files, "*.{}".format(extension)):
+            yield os.path.abspath(os.path.join(path, file))
+
+
+problem_files = []
+
+
+for f in find_mp3file('music', '*mp3'):
+    try:
+        idr3 = id3reader.Reader(f)
+        if callable(idr3.get_value) and callable(idr3.get_value) and callable(idr3.get_value) \
+                and callable(idr3.get_value):
+            print("filename: {}".format(f))
+            print("Artist: {0}\nAlbum: {1} \nTrack: {2} \nTitle: {3}\n".format(idr3.get_value('performer'),
+                                                                     idr3.get_value('album'),
+                  idr3.get_value('genre'), idr3.get_value('title')))
+    except OSError:
+        problem_files.append(f)
+
+# Glob module:
+-----------------------
+glob — Unix style pathname pattern expansion
+The glob module finds all the pathnames matching a specified pattern according to the rules used by the Unix shell,
+glob.glob(pathname, *, recursive=False)
+If recursive is true, the pattern “**” will match any files and zero or more directories, subdirectories and symbolic links to directories.
+>>> glob.glob('**/*.txt', recursive=True)
+['2.txt', 'sub/3.txt']
+
+Q. Create a script that iterates through text files and checks if strings p, y, t, h, o, or n are found in the content of the text file. If any of those strings is found, append that string to a list.
+
+    import glob
+     
+    letters = []
+    file_list = glob.iglob("letters/*.txt")
+    check = "python"
+     
+    for filename in file_list:
+        with open(filename,"r") as file:
+            letter = file.read().strip("\n")
+        if letter in check:
+            letters.append(letter)
+     
+    print(letters)
+
+Word counter:
+Create a function that takes a text file as input and returns the number of words contained in the text file. Please take into consideration that some words can be separated by a comma with no space. For example "Hi,it's me." would need to be counted as three words. For your convenience, you can use the text file in the attachment.
+
+    import re
+     
+    def count_words_re(filepath):
+        with open(filepath, 'r') as file:
+            text = file.read()
+        string_list = re.split(",| ", text)
+        return len(string_list)
+     
+    print(count_words_re("words2.txt"))
+
+Explanation 2:
+
+This alternative solution uses the built-in re  module which provides regular expression matching operations. We're using the split method of that module and the expression ",| " means to split at "," or " ".Returns a list of all words. Using methods from the re  module can be more appropriate than Python built-in methods when string operations are complicated. However, for this simple scenario the re  module could be skipped.
+
+
+collections module: OrderedDict objects
+----------------------------------------
+
+Ordered dictionaries are just like regular dictionaries but have some extra capabilities relating to ordering operations
+
+
+# enumarate:
+--------------
+
+Enumerate() in Python
+
+A lot of times when dealing with iterators, we also get a need to keep a count of iterations. Python eases the programmers’ task by providing a built-in function enumerate() for this task.
+Enumerate() method adds a counter to an iterable and returns it in a form of enumerate object. This enumerate object can then be used directly in for loops or be converted into a list of tuples using list() method.
+
+l1 = ["eat","sleep","repeat"] 
+s1 = "geek"
+obj1 = enumerate(l1) 
+obj2 = enumerate(s1) 
+print list(enumerate(l1)) 
+[(0, 'eat'), (1, 'sleep'), (2, 'repeat')]
+
+print list(enumerate(s1,2)) 
+[(2, 'g'), (3, 'e'), (4, 'e'), (5, 'k')]
+
+
+# Import statements first look for a local file in the current directory (e.g. requests.py). 
+If there is such file it imports that file, and not the actual module. 
+
+
+# https://docs.python.org/3.8/tutorial/stdlib.html
+
+#Downloading file content
+----------------------------
+
+https://realpython.com/python-requests/
+
+requests package - The requests library is the de facto standard for making HTTP requests in Python
+
+There are a number of modules for accessing the internet and processing internet protocols. 
+Two of the simplest are urllib.request for retrieving data from URLs and smtplib for sending mail:
+
+from urllib.request import urlopen
+
+with urlopen("http://www.pythonhow.com/data/universe.txt") as response_data:
+    for line in response_data:
+        line = line.decode("utf-8") # Decoding the binary data to text.
+        print(line)
+
+ # Request module can work as well easily: Count no of a s in the data downloaded from url:
+ ------------------------------------------------------------------------------------------
+
+import requests
+response = requests.get("http://www.pythonhow.com/data/universe.txt", headers={'user-agent': 'customUserAgent'})
+text = response.text
+cnt = text.count("a")
+print(" No of a in text: {}".format(str(cnt)))
+
+# Webbrowser module to open a new page:
+----------------------------------------
+# https://www.google.com/search?q=tomato+rice
+
+import webbrowser
+
+inp = input("Enter input string to search: ")
+url = "https://www.google.com/search?q="+inp
+webbrowser.open_new(url)
+
+
+# Download file from url, save to a file  & plot data
+-------------------------------------------------------
+
+Has been done using pandas, pylab plot
+
+import pandas
+from matplotlib import pyplot
+
+data = pandas.read_csv("http://www.pythonhow.com/data/sampledata.txt")
+data.plot(x="x", y="y", kind="scatter")
+pyplot.show()
+
+
+# Datetime module - strftime() and strptime() Behavior
+--------------------------------------------------------
+
+date, datetime, and time objects all support a strftime(format) method, to create a string representing 
+the time under the control of an explicit format string.
+
+Conversely, the datetime.strptime() class method creates a datetime object from a string representing a date and time and a corresponding format string
+
+See this for format usage: https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
+
+
+# password checker - password having atleast one uppercase, number & minium length :
+
+soln: using list comprehension & any() function:
+
+
+# any & all function : builtin function:
+-------------------------------------------
+
+all(*args, **kwargs): # real signature unknown
+    """
+    Return True if bool(x) is True for all values x in the iterable.
+    If the iterable is empty, -----v imp --->>>>>>>  return True.
+    """
+    pass
+
+any(*args, **kwargs): # real signature unknown
+    """
+    Return True if bool(x) is True for any x in the iterable.
+    If the iterable is empty, return False.
+
+# File search - glob.glob & glob.glob1
+--------------------------------------
+
+# Please download the attached ZIP file and extract its files in a folder. 
+Then, write a script that counts and prints out the number of .py files in that folder.
+-----------------------------------------------
+
+Answer: 
+
+    import glob
+     
+    file_list=glob.glob1("files","*.py")
+    print(len(file_list))
+
+Explanation:
+
+We're using glob  which is a standard Python library that finds pathnames matching a specified pattern. From glob  we're using glob1  which takes a directory name as first argument and a pattern which in our case is *.py  which returns all the files starting with whatever and ending with .py in the files  directory.
+
+
+
+
+# Please download the attached ZIP file. Inside the ZIP file there's a directory named subdirs. 
+That directory contains other directories inside. Please write a script that counts the number of .py 
+files contained inside subdirs and all its sub-directories.
+------------------------------------------------
+
+Answer: 
+
+    import glob
+     
+    file_list = glob.glob("subdirs/**/*.py", recursive=True)
+    print(len(file_list))
+
+Explanation:
+
+We're using glob.glob  in contrast to glob.glob1 , gets a pathname pattern and a recursive  argument which indicates whether you want to search sub-directories or not.
+
+
+# Flask - module is used to create webapplication, if we want to create a web page which will take user_texts & keep them in a file , that can 
+be done using flask, erercise-99 & 100 of 100-python exercise is using this.
+
+---------------------------------------------
+#    Decorators:
+-------------------------
+
+Decorators are a way to add additinal functionalities for a function, They represent a higher order function, that takes another 
+function as an argument, add additinal functionalities by wrapping the function taken as argument in another function (wrapper) & call the function taken as argument with supplied parameters.
+
+In below example we have created a performance decorator, (marked by @performance) in the back end , it actually does below:
+@performance
+def long_time ==>
+
+a = performance(long_time) # this call returns a function 
+a() # we are calling the function
+
+#performance decorator.
+
+from time import time
+def performance(fn):
+  def wrapper(*args, **kwargs):
+    t1 = time()
+    result = fn(*args, **kwargs)
+    t2 = time()
+    print(f'took {t2-t1}')
+    return result
+  return wrapper
+
+@performance
+def long_time():
+    for i in range(10000):
+        i*5
+
+long_time(abc) Is actually calling
+v = performance(long_time)  <-performance(long_time) is returning the wrapper function to be called next with supplied parameters
+v(abc)
+
+# ------------------------------------------
+
+
+
+
+
+2. MultiThreading
+
+
+---------------------------------------------
+# Testing in python
+
+We create a test file for every .py file we create 
+
+
+import unittest
+
+class TestStringMethods(unittest.TestCase):
+
+    def test_upper(self):
+        self.assertEqual('foo'.upper(), 'FOO')
+
+    def test_isupper(self):
+        self.assertTrue('FOO'.isupper())
+        self.assertFalse('Foo'.isupper())
+
+    def test_split(self):
+        s = 'hello world'
+        self.assertEqual(s.split(), ['hello', 'world'])
+        # check that s.split fails when the separator is not a string
+        with self.assertRaises(TypeError):
+            s.split(2)
+
+if __name__ == '__main__':
+    unittest.main()
+
+A testcase is created by subclassing unittest.TestCase. The three individual tests are defined with methods whose names start with the letters test. This naming convention informs the test runner about which methods represent tests.
+
+The crux of each test is a call to assertEqual() to check for an expected result; assertTrue() or assertFalse() to verify a condition; or assertRaises() to verify that a specific exception gets raised. These methods are used instead of the assert statement so the test runner can accumulate all test results and produce a report.
+
+The setUp() and tearDown() methods allow you to define instructions that will be executed before and after each test method.
+
+unittest.main() -> A command-line program that loads a set of tests from module and runs them; this is primarily for making test modules conveniently executable. The simplest use for this function is to include the following line at the end of a test script:
+
+
+----------------------------------------------
+2.2 Garbage generation/collection
+
+
+
+
+
+
+pyhthon ds -interview q
+python cookbook
+oop from new train
+python + ds revision/litcode problems
+--------------
+Git:
+--------------
+working dir<---(git add/rm)--> staging area -->(git commit)-->local repository <--(git clone)--> remote repository
+
+git rm --cached filename
+git log
+git status
+git checout - set the the head pointer to last commit point
+git log --oneline
+git revert vs git reset = > revert sets pointer permanently one commit back, 
+git reset has -soft,-mixed, - hard => hard one will permanentky set head pomter to the id but remove all earlier ids and changes contents 
+git ignore - helps to untrack files permanently as long as they are in the file => create a .gitignore file
+git rm -r --cached . =. REMOVES ALL CACHED FILES
+git checkout -b "Dev" => will create a new branch called Dev from master branch
+git branch <branch_name> craetes new branch 
+git branch -a => lists all the branches
+git checkout master => switches to master 
+
+fork - create a copy of the repository and put it in your account
+
+# connecting a local git repository with remote GitHub repo - it is done via "origin" ->
+git remote add origin https://github.com/reponame.git
+Test it via :
+git remote -v
+
+git pull/push -> 
+
+git pull origin master -> fetches all commites from githib from master branch
+git push origin master -> 
+
+Usual process for projects - pull problematic code to local repo-> create a new branch-> fix it-> puch it back to repository-> delete branch
+git pull
+git checkout -b edw_jira    ==> branch name edw_jira
+fix issue 
+git add .
+git commit -m "fixed issue"
+git checkout master
+git merge edw_jira => merges code in master branch of local repository
+git push origin master => push to remote
+git push origin edw_jira => sending error branch to remote as well
+
+To delete a remote branch:
+git push origin --delete edw_jira
+
+git clone:
+git clone git@github.groupondev.com:grpn-data-pipelines/hly_glive_purchase.git
+
+git remote remove origin
+git remote add origin git@github.groupondev.com:grpn-data-pipelines/hly_glive_purchase.git
+git push -u origin master
+
+git rebase
+
+Git GUI : source tree
