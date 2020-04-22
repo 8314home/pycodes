@@ -168,4 +168,7 @@ if __name__ == "__main__":
     max_st = Stack_py_file.MyStack()
     st.push(10)
 
-
+    for i in range(1,21):
+        for j in range(1,21):
+            print("{1} * {2:>2} = {0:>4}".format((i*j),i,j))
+    print("\n")

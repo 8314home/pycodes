@@ -1,5 +1,7 @@
 python
 
+/Users/smukherjee/IdeaProjects/untitled2
+
 name=input("Please enter name")
 
 print() - no distinction between '..' & ".." , whatever we start with the lone should end with it.Placing a \ infront of " or ' in the middle willescape it.
@@ -127,10 +129,11 @@ for i in range(0,100,7):
     print(i)
 
 # ---- Multiplication table:
-for i in range(1,21):
-    for j in range(1,21):
-        print("{0:<4}".format(i*j),end='')
-    print("\n")      
+                                                        
+for i in range(1,21):                                   
+    for j in range(1,21):                               
+        print("{1} * {2:>2} = {0:>4}".format((i*j),i,j))
+print("\n")                                                   
 # =====================================================
 
 # for loop has an else section available which gets executed if loop till end value is allowed to run without any "break" in between.
@@ -540,6 +543,9 @@ most cases we use set() -constructor method
 add(),union(),intersect(),difference()
 symmetric_difference() - items from both set which are not common in both set,
 
+# String,Tuple,Set,Range are immutable
+# List,Dict are mutable
+
 
 difference_update,discard vs remove,issubset(),isuperset()
 discard vs remove - removal of 2nd time throws error,if item is not there
@@ -841,29 +847,59 @@ all functions should return something ,else it will return None.
 
 varargs,named parameters,default values for parameters.
 
-
-Class: template for creating objects. All objects created using the same class will have the same characteristics.
+OOP - deviding functionalities in different code segements for reuse
+Class: - blueprint with attribute & methods - template for creating objects. All objects created using the same class will have the same characteristics.
+class deff is loaded into memory
 Object: an instance of a class.
 Instantiate: create an instance of a class.
 Method: a function defined in a class.
 Instance Attribute: a variable bound to an instance of a class.
 
 class attribute - attribute shared by all instances
-
 class attribute can be overwritten in instance level,
 also python allows additional attribute at instance level.
 
+@classmethod & @staticmethod -
+----------------------------------
+class methods are similar to class attribute, they can be used without instancing a class object.
+they can be called by using class name.
 
-# Intellij detected that function is not using self parameter, so it can be implemented as a static method (ie whose return value does not depend on
-input parameters being passed.)
+@classmethod
+def add(cls,num1,num2): # cls here denote the class name - like self
+    return num1 + num2
+can be called classname.add(4,3)
+classmethods can be used to retun object as well.
 
+def add(cls,num1,num2):
+    return cls("new_vale", num1 + num2)
 
-
+@staticmethods are used when the functioanlities does not depend on class state ie self.param1,self.param2 etc.
+it is different from classmthod, as classmethod has access to "cls" value ie the classname.
+Intellij detects that function is not using self parameter, so it can be implemented as a static method 
+(ie whose return value does not depend on input parameters being passed.)
 
 Static method is shared by all instances of a class
 1. remove self parameter
 2. put annotation @staticmethod at the top of method name
 3. static method should be  called by using class name,not by instance name or self inside class.
+
+-----------------------------------
+4 -pillars of OOP
+
+Encapsulation - binding of data & functions that works on that data.We encapsulate (data & func) inside an object
+
+Abstraction - abstraction means hiding of information/abstracting away information and giving access to only what's necessary for program/user
+              not interested to understand implementation of the functionality
+
+Inheritance - Inheritance allows objects to take properties of existing objects, we can inherite classes.
+
+
+private vs pulic variable:(under Abstraction concept)
+-----------------------------------
+No concept/keyword like private in python, though usual convension is use _ infront eg. _name
+Though it can be still overwritten , but bad practice.
+
+
 
 
 print("Models: {0.make} = {0.price}, {1.make} = {1.price}".format(kenwood, hamilton))
@@ -1063,6 +1099,31 @@ print(pixel)
 --------------------------------------
 https://docs.python.org/3/reference/import.html
 
+A Python module is a file that has a .py extension, and a Python package is any folder that has modules inside it (or, in Python 2, a folder that contains an __init__.py file).
+
+How Imports Work ? :
+But how exactly do imports work? Let’s say you import a module abc like so:import abc
+1. The first thing Python will do is look up the name abc in sys.modules. This is a cache of all modules that have been previously 
+imported.
+2. If the name isn’t found in the module cache, Python will proceed to search through a list of built-in modules.
+ These are modules that come pre-installed with Python and can be found in the Python Standard Library. 
+3. If the name still isn’t found in the built-in modules, Python then searches for it in a list of directories defined by sys.path. This list usually includes the current directory, which is searched first.
+4. When Python finds the module, it binds it to a name in the local 
+ scope. This means that abc is now defined and can be used in the current file without throwing a NameError.
+If the name is never found, you’ll get a ModuleNotFoundError
+
+
+## sys.path is initialized from these locations:
+
+The directory containing the input script (or the current directory when no file is specified).
+PYTHONPATH (a list of directory names, with the same syntax as the shell variable PATH).
+The installation-dependent default.
+
+## Use dir() to examine the contents of an imported module
+from packA.subA import sa1
+>>> dir(sa1)
+['__builtins__', '__cached__', '__doc__', '__file__', '__loader__', '__name__', '__package__', '__spec__', 'helloWorld']
+
 by default import executes the imported file, while importing , to avoid that execution we include a section
 
 if "__name__" == "__main__"
@@ -1071,6 +1132,7 @@ __name__ is a builtin attribute which stores the name of module being executed, 
 being executed, If we have a program which is importing many packages/modules, better to include __main__ section for that program part to 
 be executed as main ,and code sections from imported modules will be executed only when they are asked.
 
+importlib module - is useful to import a module
 
 # Global variable & nonlocal variable
 ----------------------------------------
@@ -1288,7 +1350,7 @@ soln: using list comprehension & any() function:
 -------------------------------------------
 
 all(*args, **kwargs): # real signature unknown
-    """
+
     Return True if bool(x) is True for all values x in the iterable.
     If the iterable is empty, -----v imp --->>>>>>>  return True.
     """
@@ -1427,11 +1489,107 @@ unittest.main() -> A command-line program that loads a set of tests from module 
 
 
 
+---------------------------------------------
+LAMBDA function:
 
-pyhthon ds -interview q
+# The lambda keyword in Python provides a shortcut for declaring small and anonymous functions:
+
+>>> add = lambda x, y: x + y
+>>> add(5, 3)
+8
+
+# You could declare the same add()
+# function with the def keyword:
+
+>>> def add(x, y):
+...     return x + y
+>>> add(5, 3)
+8
+
+# So what's the big fuss about?
+# Lambdas are *function expressions*:
+>>> (lambda x, y: x + y)(5, 3)
+8
+
+# • Lambda functions are single-expression
+# functions that are not necessarily bound
+# to a name (they can be anonymous).
+
+# • Lambda functions can't use regular
+# Python statements and always include an
+# implicit `return` statement.
+
+
+
+---------------------------------------------
+Pytest :  
+A Test runner - The test runner is a special application designed for running tests, checking the output, and giving you tools for debugging and diagnosing tests and applications.
+
+Create a new project folder and, inside that, create a new folder called my_sum. Inside my_sum, 
+create an empty file called __init__.py. Creating the __init__.py file means that the my_sum folder can be imported as a module from the parent directory.
+It is convention to ensure each file starts with test_ so all test runners will assume that Python file contains tests to be executed.
+
+# Note: What if your application is a single script?
+You can import any attributes of the script, such as classes, functions, and variables by using the built-in __import__() function. Instead of from my_sum import sum, you can write the following:
+target = __import__("my_sum.py")
+sum = target.sum
+The benefit of using __import__() is that you don’t have to turn your project folder into a package, and you can specify the file name
+
+
+Instead of providing the name of a module containing tests, you can request an auto-discovery using the following:
+
+$ python -m unittest discover
+
+This will search the current directory for any files named test*.py and attempt to test them.
+
+Once you have multiple test files, as long as you follow the test*.py naming pattern, you can provide the name of the directory instead by using the -s flag and the name of the directory:
+
+$ python -m unittest discover -s tests
+unittest will run all tests in a single test plan and give you the results.
+The specify source directory flag, -s, can be added to unittest discover with the path containing the tests:
+
+$ python -m unittest discover -s tests/integration
+
+
+
+three basic steps of every test:
+
+    Create your inputs
+    Execute the code, capturing the output
+    Compare the output with an expected result
+
+It’s not always as easy as creating a static value for the input like a string or a number. Sometimes, your application will require an instance of a class or a context. What do you do then?
+
+The data that you create as an input is known as a fixture. It’s common practice to create fixtures and reuse them.
+
+If you’re running the same test and passing different values each time and expecting the same result, this is known as parameterization.
+
+Handling Expected Failures
+Earlier, when you made a list of scenarios to test sum(), a question came up: What happens when you provide it with a bad value, such as a single integer or a string?
+In this case, you would expect sum() to throw an error. When it does throw an error, that would cause the test to fail.
+There’s a special way to handle expected errors. You can use .assertRaises() as a context-manager, then inside the with block execute the test steps:
+
+
+    def test_bad_type(self):
+        data = "banana"
+        with self.assertRaises(TypeError):
+            result = sum(data)
+
+Python fixture:
+Pytest fixtures
+
+Tests need to run against the background of a known set of objects. This set of objects is called a test fixture. 
+@pytest.fixture
+def data():
+
+    return [3, 2, 1, 5, -3, 2, 0, -2, 11, 9]
+
+---------------------------------------------
+
 python cookbook
 oop from new train
 python + ds revision/litcode problems
+
 --------------
 Git:
 --------------
@@ -1454,7 +1612,7 @@ git checkout master => switches to master
 fork - create a copy of the repository and put it in your account
 
 # connecting a local git repository with remote GitHub repo - it is done via "origin" ->
-git remote add origin https://github.com/reponame.git
+git remote add origin https://github.groupondev.com/grpn-data-pipelines/hly_glive_purchase.git
 Test it via :
 git remote -v
 
@@ -1462,6 +1620,7 @@ git pull/push ->
 
 git pull origin master -> fetches all commites from githib from master branch
 git push origin master -> 
+git pull origin PRE-164 --> pulls specific branch
 
 Usual process for projects - pull problematic code to local repo-> create a new branch-> fix it-> puch it back to repository-> delete branch
 git pull
@@ -1484,6 +1643,59 @@ git remote remove origin
 git remote add origin git@github.groupondev.com:grpn-data-pipelines/hly_glive_purchase.git
 git push -u origin master
 
-git rebase
+git rebase: (DO not do rebase into public repo)
+
+master : m1 -> m2 -> m3
+feature:       m2 -> f1 -> f2
+
+we are in feature : git rebase feature will put m3 into feature branch,
+master : m1 -> m2 -> m3
+feature:             m3 -> f1 -> f2
+
+git merge -squash feature:
+it will take all commits from feature and put it as a single commit in master:
+
+master : m1 -> m2 -> m3
+feature:       m2 -> f1 -> f2
+
+after we do git merge --squash feature
+
+master : m1 -> m2 -> m3 -> [f1 + f2 squashed into one commit]
+
+
+(base) C02W213DHTD7:hly_glive_purchase smukherjee$ git pull origin PRE-164
+From github.groupondev.com:grpn-data-pipelines/hly_glive_purchase
+ * branch            PRE-164    -> FETCH_HEAD
+Updating 9cef3c7..0dba154
+Fast-forward
+ .gitignore                                            | 127 +++++++++++++++++++++++++++
+ Makefile                                              |   8 +-
+ Pipfile                                               |   5 +-
+ Pipfile.lock                                          | 207 ++++++++++++++++++++++++++++++++++++++++++++
+ README.md                                             |  71 +++++++++++++++
+ configs/cfg_prod_groupondw_glive_purchase.yml         |   4 +
+ configs/cfg_prod_groupondw_glive_purchase_history.yml |   4 +
+ configs/glive_purchase_config.ini                     |  16 ++++
+ dependencies/sample_spark_driver.py                   | 153 +++++++++++++++++++++++++++++++++
+ dependencies/spark_driver.py                          | 134 +++++++++++++++++++++++++++++
+ generic/functions.py                                  |  20 +++++
+ jobs/complete_load_td_inc_table.py                    | 362 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ jobs/distcp_pit_gdoop.sh                              |  74 ++++++++++++++++
+ jobs/load_td_inc_table.py                             |  55 ++++++++++++
+ jobs/td_gdoop/extract_td_gdoop.yml                    |  48 +++++++++++
+ tests/conftest.py                                     |   1 +
+ tests/test_sample_job/test_sample_job.py              |   2 +
+ 17 files changed, 1287 insertions(+), 4 deletions(-)
+ create mode 100644 Pipfile.lock
+ create mode 100644 configs/cfg_prod_groupondw_glive_purchase.yml
+ create mode 100644 configs/cfg_prod_groupondw_glive_purchase_history.yml
+ create mode 100644 configs/glive_purchase_config.ini
+ create mode 100644 dependencies/sample_spark_driver.py
+ create mode 100644 dependencies/spark_driver.py
+ create mode 100644 generic/functions.py
+ create mode 100644 jobs/complete_load_td_inc_table.py
+ create mode 100755 jobs/distcp_pit_gdoop.sh
+ create mode 100644 jobs/load_td_inc_table.py
+ create mode 100755 jobs/td_gdoop/extract_td_gdoop.yml
 
 Git GUI : source tree

@@ -247,3 +247,86 @@ constructing from a pair
 ...
 >>> print(d)
 {'a': [-4, 0], 'b': [-5], 'c': [1, 2], 'd': [6]}
+
+
+1.7 You want to create a dictionary, and you also want to control the order of items when
+iterating or serializing.To control the order of items in a dictionary, you can use an OrderedDict from the
+collections module. An OrderedDict can be particularly useful when you want to build a mapping that you
+may want to later serialize or encode into a different format. For example, if you want
+to precisely control the order of fields appearing in a JSON encoding, first building the
+data in an OrderedDict will do the trick:
+
+from collections import OrderedDict
+d = OrderedDict()
+d['foo'] = 1
+d['bar'] = 2
+d['spam'] = 3
+d['grok'] = 4
+
+>>> import json
+>>> json.dumps(d)
+'{"foo": 1, "bar": 2, "spam": 3, "grok": 4}'
+
+1.8 You want to perform various calculations (e.g., minimum value, maximum value, sorting,
+    etc.) on a dictionary of data.
+
+prices = {
+'ACME': 45.23,
+'AAPL': 612.78,
+'IBM': 205.55,
+'HPQ': 37.20,
+'FB': 10.75
+}
+In order to perform useful calculations on the dictionary contents, it is often useful to
+invert the keys and values of the dictionary using zip().The solution involving zip() solves the problem by “inverting” the dictionary into a
+sequence of (value, key) pairs. When performing comparisons on such tuples, the value element is compared first, followed by the key
+
+For example, here is how to
+find the minimum and maximum price and stock name:
+
+min_price = min(zip(prices.values(), prices.keys()))
+# min_price is (10.75, 'FB')
+
+max_price = max(zip(prices.values(), prices.keys()))
+# max_price is (612.78, 'AAPL')
+
+Similarly, to rank the data, use zip() with sorted(), as in the following:
+prices_sorted = sorted(zip(prices.values(), prices.keys()))
+# prices_sorted is [(10.75, 'FB'), (37.2, 'HPQ'),
+# (45.23, 'ACME'), (205.55, 'IBM'),
+# (612.78, 'AAPL')]
+
+1.10 Problem - You want to eliminate the duplicate values in a sequence, but preserve the order of the
+remaining items.
+Solution
+If the values in the sequence are hashable, the problem can be easily solved using a set
+and a generator. For example:
+def dedupe(items):
+seen = set()
+for item in items:
+if item not in seen:
+yield item
+seen.add(item)
+Here is an example of how to use your function:
+>>> a = [1, 5, 2, 1, 9, 1, 5, 10]
+>>> list(dedupe(a))
+[1, 5, 2, 9, 10]
+
+This only works if the items in the sequence are hashable. If you are trying to eliminate
+duplicates in a sequence of unhashable types (such as dicts), you can make a slight
+change to this recipe, as follows:
+def dedupe(items, key=None):
+seen = set()
+for item in items:
+val = item if key is None else key(item)
+if val not in seen:
+yield item
+seen.add(val)
+Here, the purpose of the key argument is to specify a function that converts sequence
+items into a hashable type for the purposes of duplicate detection. Here’s how it works:
+>>> a = [ {'x':1, 'y':2}, {'x':1, 'y':3}, {'x':1, 'y':2}, {'x':2, 'y':4}]
+>>> list(dedupe(a, key=lambda d: (d['x'],d['y'])))
+[{'x': 1, 'y': 2}, {'x': 1, 'y': 3}, {'x': 2, 'y': 4}]
+>>> list(dedupe(a, key=lambda d: d['x']))
+[{'x': 1, 'y': 2}, {'x': 2, 'y': 4}]
+
