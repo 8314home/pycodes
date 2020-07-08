@@ -93,6 +93,7 @@ def anagram(str1,str2):
 # middle node from linked list
 #Need two pointers, one slow_pointer which will traverse 1 at a time, fast_pointe which will travel 2 ata time
 
+
 # O(n) complexity
 def middle_node_ll(ll_par):
     slow_pointer = ll_par.head

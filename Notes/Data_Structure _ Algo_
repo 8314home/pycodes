@@ -1,0 +1,332 @@
+Data Structure & Algo:
+
+
+Complexity theory:
+# We want deterministic algorithms where running times are approx linear
+
+# Big Ordo notation f(n) <= O(g(n)) - it defines an upper bound for f(n) function - n is input size
+
+# Number of loops is a good indicator for running time complexity.
+
+# Linear search - 1 D array if we know index of the item -> O(1) complexity but if we need to go through all items to see if it is present there
+then O(n) complexity.
+
+# Binary Search - 1D sorted array - we want search for an item - Every time we are reducing the input size by 2, so N/pow(2,x) = 1 , x is the no of time we have to devide N input size array to smaller array till we get to the value x = log N
+
+
+linked list, stack,queue,heap basics, merge sort ,binary search tree, grabage collection
+
+
+Linked list:
+-------------
+Array size needs to be known from the beginning, but for linked list we do not need to know initial size.
+wasted memory for references of linked list.
+
+# Remove operation in double linked list:
+------------------------------------------
+Remove operation for a single linked list is O(n) time complexity as we need to traverse till the node and we do not have a
+reference to previous node for that, but for a diuble linked list since we store both previous node & next node , Just updating th reference will
+be enough, a O(1) operation.
+
+
+Usage of linked list:
+inside the Heap memory , elemets are kept as linked list(double)
+
+
+Stack & Queue:
+---------------
+
+Stack - push ,pop,peek -- all are O(1) operation
+Stack memory stores temporary variables created by each function - both reference & primitive.
+
+Heap memory - manual management - object created from class -stored here - memory leak - dead objects in heap memory - uses pointer
+
+# All recursive methods can be converted to a iterative method with Stack - internally OS uses stack for recursions anyway
+
+# Stack overflow - pushing subsolutions inside stack while performing recursion, stack memory gets filled.Recursive method calls get piled up in stack.
+Stack memory stores local variables & function calls
+
+
+Binary Search Tree:
+--------------------
+left child smaller than root,root is smaller than right child - at most 2 child.
+
+insert,remove serach all are O(log n) complexity. hight of tree - h =log n at minimum - else tree will be unbalanced & O(log n) of operation can not be guranteed.
+Our intension os to skip half of the tree in each step of any operation - insert,remove,search
+
+
+# tricky is to remove a node with both child present - here we need to take max value from left subtree and copy the value to the node we are deleting, and remove the max value node.- so remove node implemented via (copy + left subtree max node deletion)
+
+AVL Tree:
+----------
+
+Balanced binary tree - AVL & Red black tree guratees balanced binary tree, so search operation is gurateed to finish within O(log N)
+
+constructing a BST from a sorted array will result into - a linked list - O(log n) reduced to O(log N)
+
+AVL tree operations are same as a BST - only difference is during every insertion we need to check if tree is still balanced
+
+AVL sort - construct a AVL tree and traverse the tree in-order - for n items O(n) for no of insert - each insert to take O(log n) time.
+total AVL sort - O(nlog n)
+
+Priority queue:
+-----------------
+
+Priority queue -done using HEAP - items have priority, while taking out an item from queue will return the item with max priority. We use Heaps to implement priority queue.max heap , min heap - binary tree (a tree with only two children) where parent value is greater than child nodes -- max heap.parent is smaller than child node min heap.
+
+
+heap representation using array/list - represnting a tree like structure using 1-d array
+parent node = i , left child = 2*i + 1 right child = 2*i+2
+
+## biggest adv of having heap is at any time we can get max/min item atmost O(1) complexity
+
+Removal & insert op takes O(log n) complexity
+
+
+ADT - Associateive array/map/dict - are abstract data type - collection of k-v pair - every key appears only once
+ADT does not support sort operation
+
+
+
+Sorting:
+-----------
+comparison based algo - bubble,insertion, selection, merge , quick
+non compare - radix sort, bucket sort
+running time complexity - O(n2), O(n log n), O(n)
+
+recursive - merge sort, quick sort
+
+in-place sorting algo (memory efficient)- quicksort - no additional memory needed --unstable sorting algo
+merge - NOT in place - stable sort algo
+
+Bubble sort - every iteration we bubble up the largest item -- inner iteration --> for j in array_length -1 -i => swap()
+
+Selection sort -simple - O(n2) - selection of minimun value at every iteration and put it in front of array, check from next position --good for flash memory as less mem requirement
+
+Insertion sort - O(n2) - no of write operation to memory is more O(n2) -- take every item from array , insert it in it's proper position by swapping necessary items from left of item position
+
+bubble < selection < insertion
+
+Quicksort - avg O(nlogn), worst - O(n2) - primitive types uses quicksort, reference types, objects - merge sort is used - divide & conquer algo - 
+
+select a pivot item -> recursive quick sort for left part & rigjt part --> swap array[pivot] item with array[high] and check if any item less than pivot --swap that with 1st item from array iteration, increment an index by 1  --> finally  swap pivot element with index element --> this is how quicksort algo make sure that all element left of it are less than that and all right of it are more than that
+
+merge < quicksort(though worst case is O(n2) if pivot element is bad)
+
+Mergesort - divide & conquer - comparison based algo - O(nlog n)
+
+merge sort -
+calculate middle index
+1. mergesort(arr,low,middle)
+2. mergesort(arr,middle+1, high)
+3. merge- part 
+
+left_half = nums[:middle]  // means last element does not include middle index item
+right_half = nums[middle:]
+
+
+Hybrid algo:
+INTROSORT, TIMSORT
+
+
+For comparison based algo - bset case senario is Theta(nlon n) as we need to make at least log 2 n! no of comparisons.
+
+Radix sort: a string sorting algo - applicable to fixed length instergers as well -- very important video -LSD,MSD - how to sort one million 32-bit integers
+
+
+-----------------------
+
+Graph Theory - Graph Traversal:
+
+BFS - Queue -FIFO -  No recursion, vertex visited, enqueue all neighbours -- take out(dequeue) from queue and mark it visited and enqueue alll it'sneighbours --> countinue the process till all noeds are visited ie Queue is empty --> In BFS all nodes are processed in a row by row basis (if it is like tree)
+
+Interview q: BFS uses a queue,DFS can be inplemented using a stack, but we use recursion, why? 
+DFS recursion implementation uses the underlying OS stack using stack memory
+
+
+DFS - created to solve mazes - visit furthest vertex before visiting neighbours
+
+implemented via recursion(uses stack in backend) or Stack - LIFO -
+
+Interview - what is the difference between DFS & BFS - from implementation perspective
+
+
+Memory management: BFS vs DFS
+
+BFS - for N items as we travel layer by layer - we need at max -no of places as equal to no of leaf nodes - so for N nodes from tree ~N/2 leaves
+so O(n) memory complexity,
+for DFS - at a time we need to store atmax no of nodes equal to height of tree - O(log n)- so O(log n) no of cells
+So DFS is preferred most of time - but BF sis important too - robot movement - discover neighbours
+
+
+
+
+
+
+
+
+Interview questions:
+
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+3. Algo - basics - merge sort using python
+sort algos , python list,set dict - cookbook
+
+Python-cookbook -chapter-1 (full),ch-6 csv,json,xml ,ch-12-thread
+
+Ch-1:
+
+1.2 You need to unpack N elements from an iterable, but the iterable may be longer than Nelements, causing a “too many values to unpack” exception
+
+Python “star expressions” can be used to address this problem, The starred variable can also be the first one in the list.
+
+suppose you have user records that consist of a name and email
+address, followed by an arbitrary number of phone numbers. You could unpack the
+records like this:
+>>> record = ('Dave', 'dave@example.com', '773-555-1212', '847-555-1212')
+>>> name, email, *phone_numbers = user_record
+>>> name
+'Dave'
+>>> email
+'dave@example.com'
+>>> phone_numbers
+['773-555-1212', '847-555-1212']
+
+
+1.3 keeping a limited history for few items
+
+can be done using a collection dequeue
+
+from collections import dequeue
+
+Using deque(maxlen=N) creates a fixed-sized queue. When new items are added and
+the queue is full, the oldest item is automatically removed
+
+>>> q = deque(maxlen=3)
+>>> q.append(1)
+>>> q.append(2)
+>>> q.append(3)
+>>> q
+deque([1, 2, 3], maxlen=3)
+>>> q.append(4)
+>>> q
+deque([2, 3, 4], maxlen=3)
+
+
+
+1.4 You want to make a list of the largest or smallest N items in a collection.
+
+sort it first and take a slice (i.e., use sorted(items)[:N] or sorted(items)[-N:]). Otherwise import heapq & heapify the list
+
+a = [-4,-5,1,0,6,2,8,9,4,-7]
+>>> sorted(a)
+[-7, -5, -4, 0, 1, 2, 4, 6, 8, 9]
+>>> sorted(a)[:3]
+[-7, -5, -4]
+>>> sorted(a)[-3:]
+[6, 8, 9]
+
+1.5 Priority queue - import heapq - push,pop mechanism - pop always return minimum priority value
+
+1.6 Multidict - dict with keys mapped to multiple values:
+usually one key is mapped to one value, for multi values , we can keep them in a list.
+constructing from a pair
+
+>>> pairs = [('a',-4),('b',-5),('c',1),('a',0),('d',6),('c',2)]
+>>> d = {}
+>>>
+>>> for k,v in pairs:
+...     if k not in d:
+...         d[k] = []  # assign a list
+...     d[k].append(v)
+...
+>>> print(d)
+{'a': [-4, 0], 'b': [-5], 'c': [1, 2], 'd': [6]}
+
+
+1.7 You want to create a dictionary, and you also want to control the order of items when
+iterating or serializing.To control the order of items in a dictionary, you can use an OrderedDict from the
+collections module. An OrderedDict can be particularly useful when you want to build a mapping that you
+may want to later serialize or encode into a different format. For example, if you want
+to precisely control the order of fields appearing in a JSON encoding, first building the
+data in an OrderedDict will do the trick:
+
+from collections import OrderedDict
+d = OrderedDict()
+d['foo'] = 1
+d['bar'] = 2
+d['spam'] = 3
+d['grok'] = 4
+
+>>> import json
+>>> json.dumps(d)
+'{"foo": 1, "bar": 2, "spam": 3, "grok": 4}'
+
+1.8 You want to perform various calculations (e.g., minimum value, maximum value, sorting,
+    etc.) on a dictionary of data.
+
+prices = {
+'ACME': 45.23,
+'AAPL': 612.78,
+'IBM': 205.55,
+'HPQ': 37.20,
+'FB': 10.75
+}
+In order to perform useful calculations on the dictionary contents, it is often useful to
+invert the keys and values of the dictionary using zip().The solution involving zip() solves the problem by “inverting” the dictionary into a
+sequence of (value, key) pairs. When performing comparisons on such tuples, the value element is compared first, followed by the key
+
+For example, here is how to
+find the minimum and maximum price and stock name:
+
+min_price = min(zip(prices.values(), prices.keys()))
+# min_price is (10.75, 'FB')
+
+max_price = max(zip(prices.values(), prices.keys()))
+# max_price is (612.78, 'AAPL')
+
+Similarly, to rank the data, use zip() with sorted(), as in the following:
+prices_sorted = sorted(zip(prices.values(), prices.keys()))
+# prices_sorted is [(10.75, 'FB'), (37.2, 'HPQ'),
+# (45.23, 'ACME'), (205.55, 'IBM'),
+# (612.78, 'AAPL')]
+
+1.10 Problem - You want to eliminate the duplicate values in a sequence, but preserve the order of the
+remaining items.
+Solution
+If the values in the sequence are hashable, the problem can be easily solved using a set
+and a generator. For example:
+def dedupe(items):
+seen = set()
+for item in items:
+if item not in seen:
+yield item
+seen.add(item)
+Here is an example of how to use your function:
+>>> a = [1, 5, 2, 1, 9, 1, 5, 10]
+>>> list(dedupe(a))
+[1, 5, 2, 9, 10]
+
+This only works if the items in the sequence are hashable. If you are trying to eliminate
+duplicates in a sequence of unhashable types (such as dicts), you can make a slight
+change to this recipe, as follows:
+def dedupe(items, key=None):
+seen = set()
+for item in items:
+val = item if key is None else key(item)
+if val not in seen:
+yield item
+seen.add(val)
+Here, the purpose of the key argument is to specify a function that converts sequence
+items into a hashable type for the purposes of duplicate detection. Here’s how it works:
+>>> a = [ {'x':1, 'y':2}, {'x':1, 'y':3}, {'x':1, 'y':2}, {'x':2, 'y':4}]
+>>> list(dedupe(a, key=lambda d: (d['x'],d['y'])))
+[{'x': 1, 'y': 2}, {'x': 1, 'y': 3}, {'x': 2, 'y': 4}]
+>>> list(dedupe(a, key=lambda d: d['x']))
+[{'x': 1, 'y': 2}, {'x': 2, 'y': 4}]
+

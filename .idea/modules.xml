@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/python_zero_to_hero/python_zero_to_hero.iml" filepath="$PROJECT_DIR$/python_zero_to_hero/python_zero_to_hero.iml" />
       <module fileurl="file://$PROJECT_DIR$/untitled2.iml" filepath="$PROJECT_DIR$/untitled2.iml" />
     </modules>
   </component>
