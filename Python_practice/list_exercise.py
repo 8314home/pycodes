@@ -23,7 +23,7 @@ print(sample_list_2)
 sample_2_list = [(2, 5), (1, 2), (4, 4), (2, 3), (2, 1)]
 
 # sorted return new list
-sample_3_list = sorted(sample_2_list, key=lambda t: t[1])
+sample_3_list = sorted(sample_2_list, key=lambda t: t[1], reverse=True)
 print(f"\nprogram-6 - {sample_3_list}")
 
 # 7. Write a Python program to remove duplicates from a list.
@@ -95,3 +95,34 @@ d_31[True] = 1
 print(d_31)
 
 # 32. Write a Python program to check whether a list contains a sublist.
+
+
+def contain_sublist(list_32, list_32_sub_list ):
+    flag = False
+
+    if list_32_sub_list == [] or len(list_32_sub_list) > len(list_32):
+        flag = False
+    elif list_32_sub_list == list_32:
+        flag = True
+    else:
+        for i in range(len(list_32)):
+            if list_32[i] == list_32_sub_list[0]:
+                k = 1
+                while k < len(list_32_sub_list):
+                    # print(f"k = {k} i+k = {i + k}")
+                    if list_32_sub_list[k] == list_32[i + k]:
+                        k += 1
+                    else:
+                        break
+                if k == len(list_32_sub_list):
+                    flag = True
+    return flag
+
+
+list_A_32 = ['b','a','c','e','f','i','j']
+list_B_32_sub_list = ['e','f','i']
+
+if contain_sublist(list_A_32, list_B_32_sub_list):
+    print("program -32 - sublist is there")
+else:
+    print("program -32 - no sublist present")

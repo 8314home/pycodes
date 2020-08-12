@@ -35,7 +35,7 @@ parrot="Norwegian Blue"
 parrot[0:6] -> will give a range from string Norweg
 parrot[:6] -> automatically starts at 0 index
 parrot[6:] -> starting from 6th position ,go till end
-parrot[-4:2] -> WILL NOT PRINT ANYTHING
+parrot[-4:2] -> WILL NOT PRINT ANYTHING ( either mention with -ve or +ve in both)
 parrot[-4:-2] -> start from 4th(back side start with -1) position from last & for 2 place
 parrot[0:6:2] -> from 0 till 6 position, every 2nd letter
 
@@ -1009,12 +1009,39 @@ IST
 ----------------------------------
 Generators are a simple and powerful tool for creating iterators. 
 They are written like regular functions but use the yield statement whenever they want to return data.
- Each time next() is called on it, the generator resumes where it left off (it remembers all the data values and which statement was last executed)
+ Each time __next__() is called on it, the generator resumes where it left off (it remembers all the data values and which statement was last executed)
 
 Generators are implemented using keyword - yield - they give one o/p & goes to a pause step, does not exit or gets 
 finished.
 
-Fibonacci no/ pi calculation
+
+# A simple generator for Fibonacci Numbers 
+def fib(limit): 
+      
+    # Initialize first two Fibonacci Numbers  
+    a, b = 0, 1
+  
+    # One by one yield next Fibonacci Number 
+    while a < limit: 
+        yield a 
+        a, b = b, a + b 
+  
+# Create a generator object 
+x = fib(5) 
+  
+# Iterating over the generator object using next 
+print(x.__next__()) --> 0
+print(x.__next__()) --> 1
+print(x.__next__()) --> 1
+print(x.__next__()) --> 2
+
+  
+# Iterating over the generator object using for 
+# in loop. 
+print("\nUsing for in loop") 
+for i in fib(5):  
+    print(i) 
+
 
 
 #os.walk is a generator, it searches files from a root dir mentioned to downstream/upstream recursively
@@ -1453,8 +1480,10 @@ be done using flask, erercise-99 & 100 of 100-python exercise is using this.
 #    Decorators:
 -------------------------
 
-Decorators are a way to add additinal functionalities for a function, They represent a higher order function, that takes another 
-function as an argument, add additinal functionalities by wrapping the function taken as argument in another function (wrapper) & call the function taken as argument with supplied parameters.
+Decorators are a way to add additinal functionalities for a function.
+They represent a higher order function, that takes another function as an argument,
+Add wrapper function - where input_function is called with additinal functionalities.
+and returns the wrapper function.
 
 In below example we have created a performance decorator, (marked by @performance) in the back end , it actually does below:
 @performance
@@ -1737,7 +1766,19 @@ def data():
 
 ---------------------------------------------
 
-new training - DS/ML training|| ds revision/python question practice - 30 || Airflow
+DS-ML trainging ZTM + Python SDE (target 15th Aug)
+
+Sat/SUN
+AIRFLOW
+Snowflake
+Kafka - stefan video 
+
+future - CCA certification ?
+
+
+
+
+
 
 
 https://myZTMtest.com

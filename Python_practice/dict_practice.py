@@ -188,7 +188,7 @@ print(dict(c))
 # zip wants a bunch of arguments to zip together, but what you have is a single argument
 # (a list, whose elements are also lists). The * in a function call "unpacks" a list
 # (or other iterable), making each of its elements a separate argument.
-# So without the *, you're doing zip( [[1,2,3],[4,5,6]] ). With the *, you're doing zip([1,2,3], [4,5,6])
+# So without the *, you're doing zip( [ [1,2,3],[4,5,6] ] ). With the *, you're doing zip([1,2,3], [4,5,6])
 
 # ------------------------------------------------
 

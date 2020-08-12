@@ -77,6 +77,28 @@ def merge_sort(nums):
         k += 1
 
 
+def selection_sort(nums):
+
+    # SELECT minimum element in each iteration and PUT at increasing index pos
+    # take from first to (last_elem -1 pos) in outer loop as we can PUT till last but 1 pos
+    # each iteration set min_index to the element and check against all elements right of it
+    # if any element is less than index then set min_index to that index
+    # at the end of inner iteration swap elements
+    # O(n2) but good with low memory req, flash memory
+
+    for i in range(len(nums)-1):
+        # print(f"intermediate - {i} - nums - {nums}")
+        min_item_index = i
+        for j in range(i+1, len(nums)):
+            if nums[min_item_index] > nums[j]:
+                min_item_index = j
+        if min_item_index != i:
+            tmp = nums[min_item_index]
+            nums[min_item_index] = nums[i]
+            nums[i] = tmp
+    return nums
+
+
 if __name__ == "__main__":
 
     # binary_search([1,2,3,5,8,9,10,11,12,16], 5)
@@ -85,3 +107,8 @@ if __name__ == "__main__":
     numbers = [8,2,-1,56,-5,12,7,4]
     merge_sort(numbers)
     print(f"merge sort o/p - {numbers}")
+
+    numbers_2 = [8,2,-1,56,-5,12,7,4]
+    print(f"\nselection sort algo")
+    selection_sort(numbers_2)
+    print(f"selection sort - {numbers_2}")

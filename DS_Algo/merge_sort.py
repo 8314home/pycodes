@@ -1,3 +1,11 @@
+# Merge sort -
+# Time complexity of Merge Sort is O(n*Log n) in all the 3 cases (worst, average and best) as merge sort
+# always divides the array in two halves and takes linear time to merge two halves.
+# It requires equal amount of additional space as the unsorted array.
+# divide part
+# conquer part-1
+# conquer part-2
+
 def merge_sort_fn(nums):
     # divide part -- divide element till 1 element
     if len(nums) == 1:
