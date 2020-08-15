@@ -1129,7 +1129,7 @@ for x in testrange:
     if x % 5 == 0:
         strval += "buzz"
     if strval == "":
-        strval += str(x)
+        strval += x.__str__()
     print(strval)
 
 print("_"*40 ,"List comprehension")
@@ -1766,14 +1766,49 @@ def data():
 
 ---------------------------------------------
 
-DS-ML trainging ZTM + Python SDE (target 15th Aug)
+Difference between a class method & static method?
+--------------------------------------------------
 
-Sat/SUN
-AIRFLOW
-Snowflake
-Kafka - stefan video 
+A class method is a method that is bound to a class rather than its object. It doesn't require creation of a class instance, much like staticmethod.
 
-future - CCA certification ?
+The difference between a static method and a class method is:
+
+    Static method knows nothing about the class and just deals with the parameters
+    Class method works with the class since its parameter is always the class itself.
+
+Eg:
+class Person:
+    age = 25
+
+    def printAge(cls):
+        print('The age is:', cls.age)
+
+Factory methods
+---------------------------------------------
+Factory methods are those methods that return a class object (like constructor) for different use cases.
+Python uses class methods and static methods for this purpose
+
+from datetime import date
+
+# random Person
+class Person:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+    @classmethod
+    def fromBirthYear(cls, name, birthYear):
+        return cls(name, date.today().year - birthYear)
+
+    def display(self):
+        print(self.name + "'s age is: " + str(self.age))
+
+person = Person('Adam', 19)
+person.display()
+
+person1 = Person.fromBirthYear('John',  1985)
+person1.display()
+
 
 
 
