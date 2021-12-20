@@ -19,7 +19,7 @@ class BinarySearchTree(object):
         else:
             self._insert_node(self.root,data)
 
-    def _insert_node(self, node,data):
+    def _insert_node(self, node, data):
         if node.data > data:
             if node.left_child:
                 self._insert_node(node.left_child, data)
@@ -61,7 +61,7 @@ class BinarySearchTree(object):
         else:
             print("No root node")
 
-    def _traverse_in_order(self,node):
+    def _traverse_in_order(self, node):
         if node.left_child:
             self._traverse_in_order(node.left_child)
         print(node.data, end=' ')

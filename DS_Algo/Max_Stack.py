@@ -45,5 +45,7 @@ if __name__ == "__main__":
     stk.push(12)
     print("Max element from stack")
     print(stk.max_element())
+    print(stk.max_stack)
+
 
 

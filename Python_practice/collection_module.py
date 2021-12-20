@@ -72,5 +72,77 @@ print(Counter(words).most_common(10))
 
 
 
+# Data Structures
+# Ex-1
+# Write a Python program to create an Enum object and display a member name and value.
+
+# Enum is a class in python for creating enumerations.
+# enumerations are a set of symbolic names (members) bound to unique, constant values.
+
+from enum import Enum, IntEnum
+
+class Country(Enum):
+    Afghanistan = 93
+    Albania = 355
+    Algeria = 213
+    Andorra = 376
+    Angola = 244
+    Antarctica = 672
+
+
+for i in Country:
+    print(i)
+
+print(Country.Antarctica.name)
+print(Country.Antarctica.value)
+
+# get all names from Enum object sorted by their numeric values
+class Country2(IntEnum):
+    Afghanistan = 93
+    Albania = 355
+    Algeria = 213
+    Andorra = 376
+    Angola = 244
+    Antarctica = 672
+
+
+for c in sorted(Country2):
+    print(c.name)
+
+# get all values from Enum object in a list
+
+print(list(map(lambda x: x.value, Country2)))
+
+
+# Ex-10 Write a Python program to group a sequence of key-value pairs into a dictionary of lists.
+# class_roll = [('v', 1), ('vi', 2), ('v', 3), ('vi', 4), ('vii', 1)]
+# output
+# [('v', [1, 3]), ('vi', [2, 4]), ('vii', [1])]
+
+from collections import defaultdict
+
+# Defaultdict is a sub-class of the dict class that returns a dictionary-like object.
+# The functionality of both dictionaries and defualtdict are almost same except for the fact that defualtdict never
+# raises a KeyError. It provides a default value for the key that does not exists.
+
+# Using List as default_factory
+
+# When the list class is passed as the default_factory argument, then a defaultdict is created with
+# the values that are list.
+
+print("default dict exercise")
+
+class_roll = [('v', 1), ('vi', 2), ('v', 3), ('vi', 4), ('vii', 1)]
+
+dd_ex_10 = defaultdict(list)
+
+for k, v in class_roll:
+    dd_ex_10[k].append(v)
+
+print(dict(dd_ex_10))
+
+
+
+
 
 

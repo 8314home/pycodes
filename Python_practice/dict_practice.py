@@ -1,3 +1,55 @@
+# Important
+
+# Python | Merge Python key values to list
+# while working with Python, we might have a problem in which we need to get the values of dictionary
+# from several dictionaries to be encapsulated into one dictionary
+
+# Input
+# test_list = [{'gfg' : 2, 'is' : 4, 'best' : 6},
+#              {'it' : 5, 'is' : 7, 'best' : 8},
+#              {'CS' : 10}]
+
+# Output
+# {‘is’: [4, 7], ‘it’: [5], ‘gfg’: [2], ‘CS’: [10], ‘best’: [6, 8]}
+
+test_list = [{'gfg' : 2, 'is' : 4, 'best' : 6},
+             {'it' : 5, 'is' : 7, 'best' : 8},
+             {'CS' : 10}]
+
+result_dict = dict()
+
+for sub in test_list:
+    for key, value in sub.items():
+        result_dict.setdefault(key, []).append(value)
+        print(result_dict)
+
+print(f"result_dict - {result_dict}")
+
+
+# OPTION-2 use a default_dict from collections
+
+from collections import defaultdict
+result_dict_2 = defaultdict(list)
+
+for sub in test_list:
+    for key, value in sub.items():
+        result_dict_2[key].append(value)
+
+print(f"result_dict_2 - {dict(result_dict_2)}")
+
+
+
+# setdefault(key,default_value) - Insert key with a value of default_value if key is not in the dictionary.
+# Return the value for key if key is in the dictionary,
+# else default.
+# here if present it is resturing a list like this
+# 'is': [4]
+# so that 7 can be appended
+# 'is': [4, 7]
+
+
+print(f"original list of dicts: {test_list}")
+print(f"output dict: {result_dict}")
 
 # 1. Write a Python program to sort (ascending and descending) a dictionary by value.
 print("program -1")
@@ -68,8 +120,8 @@ print(dic19_counter)
 
 """ using loops """
 
-d1 = {'a': 100, 'b': 200, 'c':300}
-d2 = {'a': 300, 'd':400, 'b': 200}
+d1 = {'a': 100, 'b': 200, 'c': 300}
+d2 = {'a': 300, 'd': 400, 'b': 200}
 
 for i in zip(d1.items(), d2.items()):
     print(i)

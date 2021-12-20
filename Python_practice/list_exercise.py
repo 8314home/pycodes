@@ -2,8 +2,10 @@
 #  https://www.w3resource.com/python-exercises/list/#EDITOR
 
 # 5.
-#  Write a Python program to count the number of strings where the string length is 2 or more
-#  and the first and last character are same from a given list of strings. Go to the editor
+#  Write a Python program to count the number of strings
+#  where the string length is 2 or more
+#  and the first and last character are same
+#  from a given list of strings. Go to the editor
 # Sample List : ['abc', 'xyz', 'aba', '1221']
 # Expected Result : 2
 
@@ -126,3 +128,5 @@ if contain_sublist(list_A_32, list_B_32_sub_list):
     print("program -32 - sublist is there")
 else:
     print("program -32 - no sublist present")
+
+
