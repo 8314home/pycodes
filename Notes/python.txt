@@ -251,7 +251,19 @@ Sequence Data types - List Range Tuple :
 -----------------------------------------
 
 sort() method works on existing variable ,does not create a new object.
-sorted() method returns objects in sorted order.
+sorted() method returns a new objects in sorted order without changing order of original object.
+
+>>> l=[2,1,3]
+>>> l.sort()
+>>> l
+[1, 2, 3]
+>>> l1=[3,1,2]
+>>> l2=sorted(l1)
+>>> l2
+[1, 2, 3]
+>>> l1
+[3, 1, 2]
+>>>
 
 List_1=[] #empty list same as List_2=list()
 
@@ -402,6 +414,53 @@ print(year)
 for song in tracks:
     tr_no,song=song
     print("\ttrack no: {0} song: {1}".format(tr_no,song)) 
+
+
+# How to decide if a variable is mutable or immutable?
+
+Take help of id() function which returns the memory location of the object
+The unique identifier is pointing to a location in memory, which is an object. 
+
+>>> a = 1
+>>> b = 2
+>>> c = 2
+>>> c
+2
+>>> id(c)
+10105120
+>>> id(c)
+10105120
+>>> id(b)
+10105120
+
+The object, 10105120, is the unique identifier. It’s the location in memory. Objects can have multiple variables
+
+>>> my_list = ['cat', 'dog', 'bunny']
+>>> my_list
+['cat', 'dog', 'bunny']
+>>> print('Address of my_list is: {}'.format(id(my_list)))
+Address of my_list is: 139929780579208
+
+If we want to change the first value in our list and print it out, we can see that the list changed, but the memory address of the list is the same. It changed the value in place. That’s what mutable means.
+
+>>> my_list[0] = 'sugar glider'
+>>> my_list
+['sugar glider', 'dog', 'bunny']
+>>> print('Address of my_list is: {}'.format(id(my_list)))
+Address of my_list is: 139929780579208
+>>> my_list
+['sugar glider', 'dog, 'bunny']
+>>> id(my_list)
+139929780579208
+>>> my_list[0]
+'sugar glider'
+>>> id(my_list[0])
+139905997708792
+>>> my_list[0] = 'rabbit'
+>>> id(my_list[0])
+139905997708400
+>>> id(my_list)
+139929780579208
 
 ----------------------------
 # Binary Number System:
@@ -904,6 +963,119 @@ No concept/keyword like private in python, though usual convension is use _ infr
 Though it can be still overwritten , but bad practice.
 
 
+Inheritance in Python
+--------------------------
+
+Inheritance is the capability of one class to inherit the properties from another class.
+class Person( object ):    
+  
+        # __init__ is known as the constructor         
+        def __init__(self, name, idnumber):   
+                self.name = name
+                self.idnumber = idnumber
+        def display(self):
+                print(self.name)
+                print(self.idnumber)
+  
+# child class
+class Employee( Person ):           
+        def __init__(self, name, idnumber, salary, post):
+                self.salary = salary
+                self.post = post
+  
+                # invoking the __init__ of the parent class 
+                Person.__init__(self, name, idnumber) 
+  
+                  
+# creation of an object variable or an instance
+a = Employee('Rahul', 886012, 200000, "Intern")
+
+Different forms of Inheritance: 
+1. Single inheritance
+2. Multiple inheritance: When a child class inherits from multiple parent classes.We specify all parent classes as a comma-separated list in the bracket. 
+class Base1(object):
+    def __init__(self):
+        self.str1 = "Geek1"
+        print("Base1")
+  
+class Base2(object):
+    def __init__(self):
+        self.str2 = "Geek2"        
+        print("Base2")
+  
+class Derived(Base1, Base2):
+    def __init__(self):
+          
+        # Calling constructors of Base1
+        # and Base2 classes
+        Base1.__init__(self)
+        Base2.__init__(self)
+        print("Derived")
+          
+    def printStrs(self):
+        print(self.str1, self.str2)
+ob = Derived()
+ob.printStrs()
+
+3. Multilevel inheritance: When we have a child and grandchild relationship.
+class Base(object):
+      
+    # Constructor
+    def __init__(self, name):
+        self.name = name
+  
+    # To get name
+    def getName(self):
+        return self.name
+  
+  
+# Inherited or Sub class (Note Person in bracket)
+class Child(Base):
+      
+    # Constructor
+    def __init__(self, name, age):
+        Base.__init__(self, name)
+        self.age = age
+  
+    # To get name
+    def getAge(self):
+        return self.age
+  
+# Inherited or Sub class (Note Person in bracket)
+class GrandChild(Child):
+      
+    # Constructor
+    def __init__(self, name, age, address):
+        Child.__init__(self, name, age)
+        self.address = address
+  
+    # To get address
+    def getAddress(self):
+        return self.address        
+  
+# Driver code
+g = GrandChild("Geek1", 23, "Noida")  
+print(g.getName(), g.getAge(), g.getAddress())
+
+Private members of parent class :
+
+We don’t always want the instance variables of the parent class to be inherited by the child class 
+i.e. we can make some of the instance variables of the parent class private, which won’t be available to the child class. 
+We can make an instance variable by adding double underscores before its name. For example,
+class C(object):
+       def __init__(self):
+              self.c = 21
+  
+              # d is private instance variable 
+              self.__d = 42    #Name mangling- _Classname__variable, _C__d is the variable name
+class D(C):
+       def __init__(self):
+              self.e = 84
+              C.__init__(self)
+object1 = D()
+  
+# produces an error as d is private instance variable
+print(object1.d)
 
 
 print("Models: {0.make} = {0.price}, {1.make} = {1.price}".format(kenwood, hamilton))
@@ -918,10 +1090,92 @@ if we start any variablename with two (_) inside class
 eg. __balance ==> python automatically converts it to _Classname__variable.
 this way attribute is hidden from outside.
 
+---------------------------------------------------------------
+## Abstract Base Classes in Python:
+---------------------------------------------------------------
+
+
+The Employee class in the example above is what is called an abstract base class. Abstract base classes exist to be inherited, but never instantiated. Python provides the abc module to define abstract base classes.
+
+You can use leading underscores in your class name to communicate that objects of that class should not be created. Underscores provide a friendly way to prevent misuse of your code, but they don’t prevent eager users from creating instances of that class.
+
+The abc module in the Python standard library provides functionality to prevent creating objects from abstract base classes.
+
+You can modify the implementation of the Employee class to ensure that it can’t be instantiated:
+
+# In hr.py
+
+from abc import ABC, abstractmethod
+
+class Employee(ABC):
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+
+    @abstractmethod
+    def calculate_payroll(self):
+        pass
+
+You derive Employee from ABC, making it an abstract base class. Then, you decorate the .calculate_payroll() method with the @abstractmethod decorator.
+
+This change has two nice side-effects:
+
+1. # You’re telling users of the module that objects of type Employee can’t be created.
+2. # You’re telling other developers working on the hr module that if they derive from Employee, then they must override the .calculate_payroll() abstract method.
+
+You can see that objects of type Employee can’t be created using the interactive interpreter:
+
+
+Composition:
+---------------------
+
+Composition is a concept that models a 'has a' relationship. It enables creating complex types by combining objects of other types. This means that a class Composite can contain an object of another class Component.
+
+For example, your Horse class can be composed by another object of type Tail. Composition allows you to express that relationship by saying a Horse has a Tail.
+
+
+https://realpython.com/inheritance-composition-python/ (VERY IMPORTANT)
+https://towardsdatascience.com/mastering-class-inheritance-in-python-d286eb480e9c
+
+super() method - https://realpython.com/python-super/
+Method resolution order: classname.__mro__
 
 Class level circular reference: Garbage collection:
+----------------------------------------------------
+https://www.geeksforgeeks.org/garbage-collection-python/
+https://www.tutorialspoint.com/How-does-garbage-collection-work-in-Python
 
-# dunder method - methods supplied via Object class
+def __del__(self):
+      class_name = self.__class__.__name__       
+      print class_name, "destroyed"
+
+Invoking the garbage collector manually during the execution of a program can be a good idea on how to handle memory being consumed by reference cycles. 
+import gc
+i = 0
+ 
+# create a cycle and on each iteration x as a dictionary
+# assigned to 1
+def create_cycle():
+    x = { }
+    x[i+1] = x
+    print x
+ 
+# lists are cleared whenever a full collection or
+# collection of the highest generation (2) is run
+collected = gc.collect() # or gc.collect(2)
+print "Garbage collector: collected %d objects." % (collected)
+ 
+print "Creating cycles..."
+for i in range(10):
+    create_cycle()
+ 
+collected = gc.collect()
+ 
+print "Garbage collector: collected %d objects." % (collected)
+
+
+
+# dunder method - methods supplied via Object class by default
 eg, __len__, __init__, __repr__, __str__
 
 
@@ -929,7 +1183,7 @@ eg, __len__, __init__, __repr__, __str__
 
 Getter & Setter:
 
-1. method which is used to get data attribute value
+1. method which is used to get data attribute value without a direct access to variable.
 
 
 how it is used?
@@ -971,7 +1225,7 @@ else part is executed if try block executes as expected without any exception th
 
 # Explicit data type reference: (a: str) -> int (vd-177 Learn Python Programming Masterclass)
 isinstance() function
-callable() function - whether on an object a function can be called without throwing exception: used for adding problematics file to a list & pulish at the end
+callable() function - whether on an object, a function can be called without throwing exception: used for adding problematics file to a list & pulish at the end
 get_attr() functions are used to see if an object's type.
 
 # How to store a complete object in database column using python:
@@ -1005,7 +1259,7 @@ How to get current time zone info?
 IST
 
 
-# section-12 : Generators, lambda
+# section-12 : Generators, Decorators,lambda
 ----------------------------------
 Generators are a simple and powerful tool for creating iterators. 
 They are written like regular functions but use the yield statement whenever they want to return data.
@@ -1013,6 +1267,13 @@ They are written like regular functions but use the yield statement whenever the
 
 Generators are implemented using keyword - yield - they give one o/p & goes to a pause step, does not exit or gets 
 finished.
+
+Generator in python is a subclass of Iterator. To prove this, we use the issubclass() function.
+
+>>> import collections,types
+>>> issubclass(types.GeneratorType,collections.Iterator)
+
+True
 
 
 # A simple generator for Fibonacci Numbers 
@@ -1090,6 +1351,105 @@ for s in song_list:
 ###  fnmatch.filter can take wild card  
 
 ### Generator Expression: for artist in (d for d in directories if fnmatch.fnmatch(d.upper(), caps_name))  
+
+
+difference between Iterators and Generators in python.
+
+    In creating a python generator, we use a function. But in creating an iterator in python, we use the iter() and next() functions.
+    A generator in python makes use of the ‘yield’ keyword. A python iterator doesn’t.
+    Python generator saves the states of the local variables every time ‘yield’ pauses the loop in python. An iterator does not make use of local variables, all it needs is iterable to iterate on.
+    A generator may have any number of ‘yield’ statements.
+
+Generator in python is a subclass of Iterator. To prove this, we use the issubclass() function.
+
+>>> import collections,types
+>>> issubclass(types.GeneratorType,collections.Iterator)
+
+True
+
+---------------------------------------------
+#    Decorators:
+-------------------------
+
+Decorators are a way to add additinal functionalities for a function.
+They represent a higher order function, that takes another function as an argument,
+define a wrapper function within decorator function - where input_function is called with additinal functionalities.
+and returns the wrapper function.
+
+In below example we have created a performance decorator, (marked by @performance) in the back end , it actually does below:
+@performance
+def long_time ==>
+
+a = performance(long_time) # this call returns a function 
+a() # we are calling the function
+
+#performance decorator.
+
+from time import time
+def performance(fn):
+  def wrapper(*args, **kwargs):
+    t1 = time()
+    result = fn(*args, **kwargs)
+    t2 = time()
+    print(f'took {t2-t1}')
+    return result
+  return wrapper
+
+@performance
+def long_time():
+    for i in range(10000):
+        i*5
+
+long_time(abc) Is actually calling
+v = performance(long_time)  <-performance(long_time) is returning the wrapper function to be called next with supplied parameters
+v(abc)
+
+
+
+LAMBDA function:
+
+# The lambda fn is used for declaring "ONE_TIME USE", small, anonymous functions.
+Since we will use such functions only once, we do not need any name for them.
+
+functions with action - 1 line - can be converted to lambda functions.
+lambda parameter: action(parameter)
+
+
+Q. Sort a list of tuples based on 2nd key?
+my_list_2 = [(0,2),(4,3),(9, 9),(10,-1)]
+
+my_list_2 = [(0,2),(4,3),(9, 9),(10,-1)]
+print(sorted(my_list_2)) # it is sorting based on 1st value from tuple
+
+print(sorted(my_list_2,key= lambda t:t[1]))
+# sorted() has an optional argument which accepts key column
+# to pass the 2nd field of tuple as key we can use lambda exp
+
+
+>>> add = lambda x, y: x + y
+>>> add(5, 3)
+8
+
+# You could declare the same add()
+# function with the def keyword:
+
+>>> def add(x, y):
+...     return x + y
+>>> add(5, 3)
+8
+
+# So what's the big fuss about?
+# Lambdas are *function expressions*:
+>>> (lambda x, y: x + y)(5, 3)
+8
+
+# • Lambda functions are single-expression
+# functions that are not necessarily bound
+# to a name (they can be anonymous).
+
+# • Lambda functions can't use regular
+# Python statements and always include an
+# implicit `return` statement.
 
 
 
@@ -1174,14 +1534,15 @@ A package is a foler containing modules.
 __name__ is a dunder method which gives us the file currenl being referenced for import /executed as __main__ .
 
 How Imports Work ? :
+abc ->(sys.modules) -> (python builtin modules) -> (sys.path directories)
+
 But how exactly do imports work? Let’s say you import a module abc like so:import abc
 1. The first thing Python will do is look up the name abc in sys.modules. This is a cache of all modules that have been previously 
 imported.
 2. If the name isn’t found in the module cache, Python will proceed to search through a list of built-in modules.
  These are modules that come pre-installed with Python and can be found in the Python Standard Library. 
 3. If the name still isn’t found in the built-in modules, Python then searches for it in a list of directories defined by sys.path. This list usually includes the current directory, which is searched first.
-4. When Python finds the module, it binds it to a name in the local 
- scope. This means that abc is now defined and can be used in the current file without throwing a NameError.
+4. When Python finds the module, it binds it to a name in the local scope. This means that abc is now defined and can be used in the current file without throwing a NameError.
 If the name is never found, you’ll get a ModuleNotFoundError
 
 
@@ -1206,13 +1567,13 @@ __name__ is a builtin attribute which stores the name of module being executed, 
 being executed, If we have a program which is importing many packages/modules, better to include __main__ section for that program part to 
 be executed as main ,and code sections from imported modules will be executed only when they are asked.
 
-importlib module - is useful to import a module
+importlib module - is useful to import a module -- useful to import a file directly , so that we can use functions/classes written inside file
 
 # Global variable & nonlocal variable
 ----------------------------------------
 
 # When we refer/use a variable inside a function & try to assign value, Python creates a local copy of the variable
-and use it. to use the global copy we need to mark the variable glocal inside functions scope.
+and use it. to use the global copy we need to mark the variable global inside functions scope.
 
 # New scopes are created in python only by class, function & module.
 
@@ -1245,9 +1606,35 @@ Explanation:
 Adding global c  fixes the code. That line makes available name c  in the global namespace. 
 Therefore,  print is able to access variable c .
 
-Nonlocal variable example: 
+Nonlocal variable example: -- remember - Nested function 
 -----------------------------
+Nonlocal variables are used in nested functions whose local scope is not defined. This means that the variable can be neither in the local nor the global scope.
 
+Let's see an example of how a nonlocal variable is used in Python.
+
+We use nonlocal keywords to create nonlocal variables.
+Example 6: Create a nonlocal variable
+
+def outer():
+    x = "local"
+
+    def inner():
+        nonlocal x
+        x = "nonlocal"
+        print("inner:", x)
+
+    inner()
+    print("outer:", x)
+
+
+outer()
+
+Output
+
+inner: nonlocal
+outer: nonlocal
+
+In the above code, there is a nested inner() function. We use nonlocal keywords to create a nonlocal variable. The inner() function is defined in the scope of another function outer().
 
 
 
@@ -1476,42 +1863,6 @@ We're using glob.glob  in contrast to glob.glob1 , gets a pathname pattern and a
 # Flask - module is used to create webapplication, if we want to create a web page which will take user_texts & keep them in a file , that can 
 be done using flask, erercise-99 & 100 of 100-python exercise is using this.
 
----------------------------------------------
-#    Decorators:
--------------------------
-
-Decorators are a way to add additinal functionalities for a function.
-They represent a higher order function, that takes another function as an argument,
-Add wrapper function - where input_function is called with additinal functionalities.
-and returns the wrapper function.
-
-In below example we have created a performance decorator, (marked by @performance) in the back end , it actually does below:
-@performance
-def long_time ==>
-
-a = performance(long_time) # this call returns a function 
-a() # we are calling the function
-
-#performance decorator.
-
-from time import time
-def performance(fn):
-  def wrapper(*args, **kwargs):
-    t1 = time()
-    result = fn(*args, **kwargs)
-    t2 = time()
-    print(f'took {t2-t1}')
-    return result
-  return wrapper
-
-@performance
-def long_time():
-    for i in range(10000):
-        i*5
-
-long_time(abc) Is actually calling
-v = performance(long_time)  <-performance(long_time) is returning the wrapper function to be called next with supplied parameters
-v(abc)
 
 # ------------------------------------------
 
@@ -1520,7 +1871,7 @@ v(abc)
 
 
 2. MultiThreading
-
+3. Multiprocessing
 
 ---------------------------------------------
 # Testing in python
@@ -1651,56 +2002,6 @@ reduce(red_val, (my_numbers + scores), 0)
 
 
 
-LAMBDA function:
-
-# The lambda keyword in Python provides a shortcut for declaring "ONE_TIME" small and anonymous functions:
-Since we will use such functions only once, we do not need any name for them.
-
-functions with action - 1 line - can be converted to lambda functions.
-lambda parameter: action(parameter)
-
-
-Q. Sort a list of tuples based on 2nd key?
-my_list_2 = [(0,2),(4,3),(9, 9),(10,-1)]
-
-my_list_2 = [(0,2),(4,3),(9, 9),(10,-1)]
-print(sorted(my_list_2)) # it is sorting based on 1st value from tuple
-
-print(sorted(my_list_2,key= lambda t:t[1]))
-# sorted() has an optional argument which accepts key column
-# to pass the 2nd field of tuple as key we can use lambda exp
-
-
-
-
-
->>> add = lambda x, y: x + y
->>> add(5, 3)
-8
-
-# You could declare the same add()
-# function with the def keyword:
-
->>> def add(x, y):
-...     return x + y
->>> add(5, 3)
-8
-
-# So what's the big fuss about?
-# Lambdas are *function expressions*:
->>> (lambda x, y: x + y)(5, 3)
-8
-
-# • Lambda functions are single-expression
-# functions that are not necessarily bound
-# to a name (they can be anonymous).
-
-# • Lambda functions can't use regular
-# Python statements and always include an
-# implicit `return` statement.
-
-
-
 ---------------------------------------------
 Pytest :  
 A Test runner - The test runner is a special application designed for running tests, checking the output, and giving you tools for debugging and diagnosing tests and applications.
@@ -1710,7 +2011,9 @@ create an empty file called __init__.py. Creating the __init__.py file means tha
 It is convention to ensure each file starts with test_ so all test runners will assume that Python file contains tests to be executed.
 
 # Note: What if your application is a single script?
-You can import any attributes of the script, such as classes, functions, and variables by using the built-in __import__() function. Instead of from my_sum import sum, you can write the following:
+You can import any attributes of the script, such as classes, functions, and variables by using the built-in __import__() function. Instead of
+
+from my_sum import sum, you can write the following:
 target = __import__("my_sum.py")
 sum = target.sum
 The benefit of using __import__() is that you don’t have to turn your project folder into a package, and you can specify the file name
@@ -1729,7 +2032,6 @@ unittest will run all tests in a single test plan and give you the results.
 The specify source directory flag, -s, can be added to unittest discover with the path containing the tests:
 
 $ python -m unittest discover -s tests/integration
-
 
 
 three basic steps of every test:
@@ -1755,21 +2057,126 @@ There’s a special way to handle expected errors. You can use .assertRaises() a
         with self.assertRaises(TypeError):
             result = sum(data)
 
-Python fixture:
+
+To execute the tests from a specific file, use the following syntax − pytest <filename> -v
+Pytest provides two ways to run the subset of the test suite.
+
+1. Select tests to run based on substring matching of test names.
+pytest -k <substring> -v 
+-k <substring> represents the substring to search for in the test names.
+
+2. Select tests groups to run based on the markers applied.
+Pytest allows us to use markers on test functions.Pytest provides many inbuilt markers such as
+xfail
+skip
+parametrize.
+ Apart from that, users can create their own marker names. Markers are applied on the tests using the syntax given below −
+import pytest
+@pytest.mark.<markername>
+
+To run the marked tests, we can use the following syntax − pytest -m <markername> -v
+
+import pytest
+@pytest.mark.great
+def test_greater():
+   num = 100
+   assert num > 100
+
+pytest -m great -v
+
+
+-----------------
 Pytest fixtures
+-----------------
+Fixtures are functions, which will run before each test function to which it is applied.
 
-Tests need to run against the background of a known set of objects. This set of objects is called a test fixture. 
+Fixtures are used to feed some data to the tests such as database connections, URLs to test and some sort of input data. Therefore, instead of running the same code for every test, we can attach fixture function to the tests and it will run and return the data to the test before executing each test.
+
+A function is marked as a fixture by − @pytest.fixture
+A test function can use a fixture by mentioning the fixture name as an input parameter.
+
+import pytest
+
 @pytest.fixture
-def data():
+def input_value():
+   input = 39
+   return input
 
-    return [3, 2, 1, 5, -3, 2, 0, -2, 11, 9]
+def test_divisible_by_3(input_value):
+   assert input_value % 3 == 0
+
+def test_divisible_by_6(input_value):
+   assert input_value % 6 == 0
+
+Pytest while the test is getting executed, will see the fixture name as input parameter. It then executes the fixture function and the returned value is stored to the input parameter, which can be used by the test.
+
+Limitation of fixture:
+A fixture function defined inside a test file has a scope within the test file only. 
+We cannot use that fixture in another test file. To make a fixture available to multiple test files, we have to define the fixture function in a file called conftest.py.
+
+Conftest.py - 
+We can define the fixture functions in Conftest.py file to make them accessible across multiple test files.
+The tests in a test file will look for fixture in the same file. As the fixture is not found in the test file, it will check for fixture in conftest.py file. On finding it, the fixture method is invoked and the result is returned to the input argument of the test.
+
+
+pytest markers: 
+
+Parameterize - @pytest.mark.parametrize
+Parameterizing is done to run the test fn against multiple sets of inputs.
+
+import pytest
+
+@pytest.mark.parametrize("num, output",[(1,11),(2,22),(3,35),(4,44)])
+def test_multiplication_11(num, output):
+   assert 11*num == output
+
+Skip and Xfail tests in Pytest:
+
+When to use?
+1. A test is not relevant for some time due to some reasons.
+2. A new feature is being implemented and we already added a test for that feature.
+In these situations, we have the option to xfail the test or skip the tests.
+
+Pytest will execute the xfailed test, but it will not be considered as part failed or passed tests. Details of these tests will not be printed even if the test fails (remember pytest usually prints the failed test details). We can xfail tests using the following marker −
+
+@pytest.mark.xfail
+
+Skipping a test means that the test will not be executed. We can skip tests using the following marker −
+
+@pytest.mark.skip
+
+
+Stop Test Suite after N no of failures-
+if we want to stop the execution of test suite soon after n number of test fails. This can be done in pytest using maxfail.
+The syntax to stop the execution of test suite soon after n number of test fails is as follows −
+
+pytest --maxfail = <num>
+eg:  pytest test_failure.py -v --maxfail 1
+
+MonkeyPatching - to Guard Access
+--------------------------------
+Another interesting use case for fixtures is in guarding access to resources. Imagine that you’ve written a test suite for code that deals with API calls. You want to ensure that the test suite doesn’t make any real network calls, even if a test accidentally executes the real network call code. pytest provides a monkeypatch fixture to replace values and behaviors, which you can use to great effect:
+
+# conftest.py
+
+import pytest
+import requests
+
+@pytest.fixture(autouse=True)
+def disable_network_calls(monkeypatch):
+    def stunted_get():
+        raise RuntimeError("Network access not allowed during testing!")
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: stunted_get())
+
+By placing disable_network_calls() in conftest.py and adding the autouse=True option, you ensure that network calls will be disabled in every test across the suite. Any test that executes code calling requests.get() will raise a RuntimeError indicating that an unexpected network call would have occurred.
+
 
 ---------------------------------------------
 
 Difference between a class method & static method?
 --------------------------------------------------
 
-A class method is a method that is bound to a class rather than its object. It doesn't require creation of a class instance, much like staticmethod.
+A class method is bound to a class rather than its object.Using class method doesn't require creation of a class instance, much like staticmethod.
 
 The difference between a static method and a class method is:
 
@@ -1785,8 +2192,9 @@ class Person:
 
 Factory methods
 ---------------------------------------------
-Factory methods are those methods that return a class object (like constructor) for different use cases.
-Python uses class methods and static methods for this purpose
+Factory methods are those methods that return a class object like constructor but for different use case.
+Python uses cls option instead of self, for this purpose
+Can be implemented by classmethod.
 
 from datetime import date
 
@@ -1811,8 +2219,46 @@ person1.display()
 
 
 
+-------------------------------------
+
+MultiProcessing(Parallelism) & MultiThreading(Concurrency):
 
 
+# One process can spawn multiple threads, all of which can work on a single core of processor.
+
+In multiprocessing, multiple processes are created, each of which work on individual cores.
+ Rule of thumb, IO intensive actions works better with MultiThreading, CPU intensive 
+actions/functions/scripts work better with multiprocessing.
+
+
+Concurrency is when two or more tasks can start, run, and complete in overlapping time periods. It doesn't necessarily mean they'll ever both be running at the same instant. For example, multitasking on a single-core machine.
+
+Parallelism is when tasks literally run at the same time, e.g., on a multicore processor.
+
+
+Modern ways of creating processes & threads is to use ProcessPoolExecutor & ThreadPoolExecutor() from concurrent.futures module
+
+
+
+
+
+---------------------------
+Python | Method Overloading
+
+Like other languages (for example, method overloading in C++) do, python does not support method overloading by default. But there are different ways to achieve method overloading in Python. 
+
+The problem with method overloading in Python is that we may overload the methods but can only use the latest defined method
+
+https://www.geeksforgeeks.org/python-method-overloading/
+
+Method overriding 
+is an ability of any object-oriented programming language that allows a subclass or child class to provide a specific implementation of a method that is already provided by one of its super-classes or parent classes. When a method in a subclass has the same name, same parameters or signature and same return type(or sub-type) as a method in its super-class, then the method in the subclass is said to override the method in the super-class.
+
+overriding-in-python
+
+The version of a method that is executed will be determined by the object that is used to invoke it. If an object of a parent class is used to invoke the method, then the version in the parent class will be executed, but if an object of the subclass is used to invoke the method, then the version in the child class will be executed. In other words, it is the type of the object being referred to (not the type of the reference variable) that determines which version of an overridden method will be executed.
+
+https://www.geeksforgeeks.org/method-overriding-in-python/
 
 
 
@@ -1943,3 +2389,39 @@ Fast-forward
  create mode 100755 jobs/td_gdoop/extract_td_gdoop.yml
 
 Git GUI : source tree
+
+
+---------------
+
+Hi All
+11:14
+HR had asked us to choose the best job profile for our team and we landed up in Big Data Engg which is similar to SDE in comp level also.
+11:14
+so we have to go through the process
+11:14
+
+Interview topics:
+1.5 hour: Programming
+Language proficiency evaluation: Scala/ Java/ Python or any language Engineer claims proficiency in
+Ability to test own code - Scala/ Java/ Python test (for unit testing)
+
+1.5 hour: Concepts
+Data Structures.
+Runtime and memory efficiency (O notation).
+OOP concepts.
+Recursion
+Variable scope.
+Garbage collection
+System Architecture - 
+https://swi.cs.vsb.cz/RUPLarge/core.base_rup/guidances/concepts/system_architecture_5F3B1E17.html
+https://towardsdatascience.com/10-common-software-architectural-patterns-in-a-nutshell-a0b47a1e9013
+
+Code Deployment
+Automation
+Programming models - 
+https://softwareengineering.stackexchange.com/questions/365755/what-is-a-programming-model
+https://www.dauniv.ac.in/public/frontassets/coursematerial/embeddedsystems/Chap_8Lesson1Emsys3EProgModels.pdf
+Design Patterns - ?
+
+
+

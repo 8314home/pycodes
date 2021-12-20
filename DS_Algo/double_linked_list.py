@@ -1,6 +1,6 @@
 class Node(object):
 
-    def __init__(self,data):
+    def __init__(self, data):
         self.data = data
         self.previousNode = None
         self.nextNode = None
@@ -15,7 +15,7 @@ class double_Linked_List(object):
 
     def insert_at_start(self, data):
         tmpnode = Node(data)
-        #print("created a node with value {}".format(data))
+        # print("created a node with value {}".format(data))
         if self.total_size == 0:
             self.head = tmpnode
         else:
@@ -26,7 +26,7 @@ class double_Linked_List(object):
 
     def insert_at_end(self,data):
         tmpnode = Node(data)
-        #print("created a node with value {}".format(data))
+        # print("created a node with value {}".format(data))
         if self.total_size == 0:
             self.head = tmpnode
         else:
@@ -38,8 +38,6 @@ class double_Linked_List(object):
             tmpnode.previousNode = current_node
 
         self.total_size += 1
-
-
 
     def remove(self, data):
         current_node = self.head

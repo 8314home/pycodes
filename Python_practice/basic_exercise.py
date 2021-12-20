@@ -38,8 +38,21 @@ def remove_numbers(input_list: list):
             position = (position + 2) % length_of_list
 
 
-# 80. Write a Python program to count number of substrings with same first and last characters of a given string.
-# Click me to see the sample solution
+# 79. Write a Python program to find smallest and largest word in a given string.
+
+import re
+
+
+def smallest_largest_word(input_string: str):
+    listed_words = [re.sub('[,.(){};\\[\\]]', '', x) for x in input_string.split(" ")]
+    print(listed_words)
+    min_str = max_str = listed_words[0]
+    for x in listed_words:
+        if len(x) > len(max_str):
+            max_str = x
+        if len(x) < len(min_str):
+            min_str = x
+    print(f"min_str - {min_str} max_str - {max_str}")
 
 # 81. Write a Python program to find the index of a given string at which a given substring starts.
 # If the substring is not found in the given string return 'Not found'. Go to the editor
@@ -55,9 +68,30 @@ def remove_numbers(input_list: list):
 # Click me to see the sample solution
 
 
-# 49. Write a Python program to count and display the vowels of a given text.
+# 49. Write a Python program to count and display the vowels and consonents of a given text.
 
-# 68. Write a Python program to create two strings from a given string. Create the first string using those character which occurs only once and create the second string which consists of multi-time occurring characters in the said string.
+def vowels_in_text(input_string: str):
+    vowels = "aeiouAEIOU"
+    print([c for c in input_string if c in vowels])
+    print([c for c in input_string if c not in vowels])
+
+# 68. Write a Python program to create two strings from a given string.
+# Create the first string using those character which occurs only once
+# and create the second string which consists of multi-time occurring characters in the said string.
+
+
+from collections import Counter
+
+
+def single_occur_multi_occur(input_string: str):
+    counter_obj_string = Counter(input_string).most_common()
+    # most_common() returns a list with keys with no of occurances in reverse order
+    single_occur = [k for (k, v) in counter_obj_string if v > 1]
+    multi_occur = [k for (k, v) in counter_obj_string if v == 1]
+    print(counter_obj_string)
+    print(single_occur)
+    print(multi_occur)
+
 
 # 69. Write a Python program to find the longest common sub-string from two given strings.
 
@@ -68,10 +102,15 @@ def remove_numbers(input_list: list):
 
 
 
-# 2. Write a Python program to create all possible strings by using 'a', 'e', 'i', 'o', 'u'. Use the characters exactly once.
+
+
+
+
+# 2. Write a Python program to create all possible strings by using 'a', 'e', 'i', 'o', 'u'.
+# Use the characters exactly once.
+
 
 import itertools
-import random
 
 
 def all_possible_strings(char_list: list):
@@ -100,3 +139,12 @@ if __name__ == "__main__":
 
     print("\n all_possible_strings:")
     all_possible_strings(['a', 'e', 'i', 'o', 'u'])
+
+    print("\nsmallest_largest_word:")
+    print(smallest_largest_word("Write a [Java program] to sort an array of given integers using Quick sort Algorithm."))
+
+    print("\n vowels_in_text:")
+    vowels_in_text("Power BI")
+
+    print("\n single_occur_multi_occur:")
+    single_occur_multi_occur("parallelogram")
